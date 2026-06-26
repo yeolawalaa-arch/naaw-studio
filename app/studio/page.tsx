@@ -21,6 +21,7 @@ const PRODUCTS: { type: ProductType; label: string; category: string }[] = [
   { type: "shorts", label: "Shorts", category: "Bottoms" },
   { type: "joggers", label: "Joggers", category: "Bottoms" },
   { type: "jeans", label: "Jeans", category: "Bottoms" },
+  { type: "saree", label: "Saree", category: "Traditional" },
   { type: "sneaker-low", label: "Sneaker Low", category: "Footwear" },
   { type: "sneaker-high", label: "Sneaker High", category: "Footwear" },
   { type: "boot", label: "Boot", category: "Footwear" },
@@ -43,7 +44,7 @@ const PRODUCTS: { type: ProductType; label: string; category: string }[] = [
   { type: "earrings", label: "Earrings", category: "Accessories" },
 ];
 
-const CATEGORIES = ["Tops", "Bottoms", "Footwear", "Hats", "Bags", "Accessories"];
+const CATEGORIES = ["Tops", "Bottoms", "Footwear", "Hats", "Bags", "Accessories", "Traditional"];
 
 const PATTERN_STYLES: { id: string; label: string; patterns: { id: string; label: string }[] }[] = [
   { id: "basic", label: "Basic", patterns: [

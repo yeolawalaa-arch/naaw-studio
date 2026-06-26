@@ -10,7 +10,7 @@ export interface ProductColors {
 
 export type ProductType =
   | "tshirt" | "shirt" | "polo" | "hoodie" | "jacket" | "bomber"
-  | "shorts" | "joggers" | "jeans"
+  | "shorts" | "joggers" | "jeans" | "saree"
   | "sneaker-low" | "sneaker-high" | "boot" | "sandal" | "slip-on"
   | "cap" | "beanie" | "bucket-hat"
   | "backpack" | "tote"
@@ -42,6 +42,7 @@ const products: Record<ProductType, React.ComponentType<{colors: ProductColors; 
   "shorts":       dynamic(() => import("./products/Shorts")),
   "joggers":      dynamic(() => import("./products/Joggers")),
   "jeans":        dynamic(() => import("./products/Jeans")),
+  "saree":        dynamic(() => import("./products/Saree")),
   "sneaker-low":  dynamic(() => import("./products/SneakerLow")),
   "sneaker-high": dynamic(() => import("./products/SneakerHigh")),
   "boot":         dynamic(() => import("./products/Boot")),

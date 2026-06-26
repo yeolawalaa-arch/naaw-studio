@@ -563,10 +563,32 @@ function SlipOn3D({ colors, pattern }: { colors: ProductColors; pattern: string 
   );
 }
 
+function Saree3D({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+  const mat = useMat(colors, pattern, 0.55);
+  const blouseMat = useMat({ ...colors, main: colors.secondary }, pattern, 0.6);
+  const borderMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.accent), roughness: 0.4, metalness: 0.3 }), [colors.accent]);
+  return (
+    <group>
+      {/* Main drape body */}
+      <RoundedBox args={[2.8, 4.5, 0.08]} radius={0.04} position={[0, -0.5, 0]} material={mat}/>
+      {/* Blouse (choli) */}
+      <RoundedBox args={[2.4, 1.0, 0.14]} radius={0.06} position={[0, 1.9, 0.04]} material={blouseMat}/>
+      {/* Pallu draped over shoulder */}
+      <RoundedBox args={[0.9, 3.6, 0.07]} radius={0.04} position={[-2.0, 0.3, 0.06]} rotation={[0, 0, 0.18]} material={mat}/>
+      {/* Bottom border */}
+      <RoundedBox args={[2.8, 0.28, 0.1]} radius={0.04} position={[0, -2.72, 0.05]} material={borderMat}/>
+      {/* Pallu border */}
+      <RoundedBox args={[0.2, 3.6, 0.08]} radius={0.03} position={[-2.46, 0.3, 0.07]} rotation={[0, 0, 0.18]} material={borderMat}/>
+      {/* Waist line detail */}
+      <RoundedBox args={[2.8, 0.1, 0.12]} radius={0.03} position={[0, 1.38, 0.06]} material={borderMat}/>
+    </group>
+  );
+}
+
 const MODEL_MAP: Record<string, React.FC<{ colors: ProductColors; pattern: string }>> = {
   "tshirt": TShirt3D, "shirt": Shirt3D, "polo": Polo3D,
   "hoodie": Hoodie3D, "jacket": Jacket3D, "bomber": Bomber3D,
-  "shorts": Shorts3D, "joggers": Joggers3D, "jeans": Jeans3D,
+  "shorts": Shorts3D, "joggers": Joggers3D, "jeans": Jeans3D, "saree": Saree3D,
   "sneaker-low": SneakerLow3D, "sneaker-high": SneakerHigh3D,
   "boot": Boot3D, "sandal": Sandal3D, "slip-on": SlipOn3D,
   "cap": Cap3D, "beanie": Beanie3D, "bucket-hat": BucketHat3D,
