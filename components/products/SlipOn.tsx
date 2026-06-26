@@ -41,7 +41,7 @@ export default function SlipOn({ colors, pattern }: { colors: ProductColors; pat
       {[94,100,106].map(y=>(<line key={y} x1="216" y1={y} x2="284" y2={y} stroke={darken(colors.main,20)} strokeWidth="1" strokeDasharray="3,3" opacity="0.5"/>))}
       <path d={COLLAR} fill={darken(colors.main,15)} stroke={darken(colors.main,30)} strokeWidth="1.5"/>
       {/* Brand side print */}
-      <text x="248" y="175" textAnchor="middle" fill="rgba(255,255,255,0.12)" fontSize="20" fontWeight="900" fontFamily="Arial" letterSpacing="4">NAAW</text>
+      
     </svg>
   );
 }

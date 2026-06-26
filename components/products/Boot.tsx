@@ -39,7 +39,7 @@ export default function Boot({ colors, pattern }: { colors: ProductColors; patte
       {/* Speed hooks */}
       {[100,120,140].map(y=>(<g key={y}><path d={`M ${212},${y} L ${206},${y-3} L ${206},${y+3}`} stroke={colors.accent} strokeWidth="2" fill="none"/><path d={`M ${320},${y} L ${326},${y-3} L ${326},${y+3}`} stroke={colors.accent} strokeWidth="2" fill="none"/></g>))}
 
-      <text x="266" y="200" textAnchor="middle" fill="rgba(255,255,255,0.1)" fontSize="20" fontWeight="900" fontFamily="Arial" letterSpacing="4">NAAW</text>
+      
     </svg>
   );
 }

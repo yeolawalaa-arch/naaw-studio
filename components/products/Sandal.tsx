@@ -37,7 +37,7 @@ export default function Sandal({ colors, pattern }: { colors: ProductColors; pat
       {/* Buckle */}
       <rect x="108" y="220" width="22" height="18" rx="3" fill={colors.accent} stroke={darken(colors.accent,20)} strokeWidth="1.5"/>
       <line x1="119" y1="220" x2="119" y2="238" stroke={darken(colors.accent,20)} strokeWidth="1.5"/>
-      <text x="250" y="215" textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="16" fontWeight="900" fontFamily="Arial" letterSpacing="3">NAAW</text>
+      
     </svg>
   );
 }

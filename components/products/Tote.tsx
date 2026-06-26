@@ -33,7 +33,7 @@ export default function Tote({ colors, pattern }: { colors: ProductColors; patte
       <line x1="400" y1="138" x2="410" y2="390" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" strokeDasharray="4,5"/>
       {/* Bottom seam */}
       <path d="M 90,385 C 130,394 190,398 250,398 C 310,398 370,394 410,385" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" fill="none" strokeDasharray="4,5"/>
-      <text x="250" y="275" textAnchor="middle" fill="rgba(255,255,255,0.14)" fontSize="26" fontWeight="900" fontFamily="Arial" letterSpacing="6">NAAW</text>
+      
     </svg>
   );
 }

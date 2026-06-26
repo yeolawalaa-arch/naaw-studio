@@ -46,7 +46,7 @@ export default function Shorts({ colors, pattern }: { colors: ProductColors; pat
       <line x1="120" y1="95" x2="82" y2="318" stroke={colors.accent} strokeWidth="5" strokeLinecap="round" opacity="0.7"/>
       <line x1="380" y1="95" x2="418" y2="318" stroke={colors.accent} strokeWidth="5" strokeLinecap="round" opacity="0.7"/>
 
-      <text x="250" y="155" textAnchor="middle" fill="rgba(255,255,255,0.1)" fontSize="18" fontWeight="900" fontFamily="Arial" letterSpacing="4">NAAW</text>
+      
     </svg>
   );
 }

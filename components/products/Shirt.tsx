@@ -52,7 +52,7 @@ export default function Shirt({ colors, pattern }: { colors: ProductColors; patt
       {/* Pocket */}
       <rect x="116" y="225" width="56" height="52" rx="3" fill={darken(colors.main,12)} stroke={darken(colors.main,28)} strokeWidth="1.2"/>
 
-      <text x="250" y="310" textAnchor="middle" fill={`rgba(255,255,255,0.1)`} fontSize="22" fontWeight="900" fontFamily="Arial" letterSpacing="5">NAAW</text>
+      
     </svg>
   );
 }

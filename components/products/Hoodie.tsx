@@ -55,7 +55,7 @@ export default function Hoodie({ colors, pattern }: { colors: ProductColors; pat
       <circle cx="200" cy="154" r="5" fill={colors.accent}/>
       <circle cx="300" cy="154" r="5" fill={colors.accent}/>
 
-      <text x="250" y="268" textAnchor="middle" fill="rgba(255,255,255,0.12)" fontSize="22" fontWeight="900" fontFamily="Arial" letterSpacing="5">NAAW</text>
+      
     </svg>
   );
 }

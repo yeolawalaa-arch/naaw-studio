@@ -61,7 +61,7 @@ export default function Cap({ colors, pattern }: { colors: ProductColors; patter
       <circle cx="250" cy="84" r="8" fill={colors.accent} stroke={darken(colors.accent,20)} strokeWidth="1"/>
 
       {/* Brand label on front */}
-      <text x="250" y="175" textAnchor="middle" fill="rgba(255,255,255,0.18)" fontSize="22" fontWeight="900" fontFamily="Arial" letterSpacing="4">NAAW</text>
+      
     </svg>
   );
 }

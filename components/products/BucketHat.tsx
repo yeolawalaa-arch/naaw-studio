@@ -41,7 +41,7 @@ export default function BucketHat({ colors, pattern }: { colors: ProductColors; 
       {/* Brim stitch */}
       <path d="M 86,258 C 130,272 190,278 250,278 C 310,278 370,272 414,258" stroke="rgba(255,255,255,0.1)" strokeWidth="1.2" fill="none" strokeDasharray="4,5"/>
 
-      <text x="250" y="170" textAnchor="middle" fill="rgba(255,255,255,0.16)" fontSize="20" fontWeight="900" fontFamily="Arial" letterSpacing="4">NAAW</text>
+      
     </svg>
   );
 }

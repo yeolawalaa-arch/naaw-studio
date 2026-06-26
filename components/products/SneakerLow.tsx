@@ -44,7 +44,7 @@ export default function SneakerLow({ colors, pattern }: { colors: ProductColors;
       <path d={STRIPE} fill={`url(#${u}ag)`} stroke={darken(colors.accent,16)} strokeWidth="1.2"/>
       <path d={TONGUE} fill={darken(colors.main,5)} stroke={darken(colors.main,24)} strokeWidth="1.4"/>
       <rect x="246" y="196" width="52" height="22" rx="3" fill={darken(colors.main,26)} opacity="0.78"/>
-      <text x="272" y="211" textAnchor="middle" fill="white" fontSize="8.5" fontWeight="bold" fontFamily="Arial" letterSpacing="2" opacity="0.9">NAAW</text>
+      
       <path d="M 238,220 C 230,206 226,190 230,178 C 234,168 242,164 252,166" stroke={darken(colors.main,24)} strokeWidth="2.5" fill="none" strokeLinecap="round"/>
       {[0,1,2,3,4,5].map(i=>{const y=165+i*14,lx=250-i,rx=294+i,wd=i%2===0?-2.5:2.5;return(<g key={i}><path d={`M ${lx},${y} C ${lx+14},${y+wd} ${rx-14},${y-wd} ${rx},${y}`} stroke={colors.detail||"#fff"} strokeWidth="3" fill="none" strokeLinecap="round"/><circle cx={lx} cy={y} r="4" fill={darken(colors.main,35)} stroke="#bbb" strokeWidth="0.9"/><circle cx={lx} cy={y} r="2" fill="#888"/><circle cx={rx} cy={y} r="4" fill={darken(colors.main,35)} stroke="#bbb" strokeWidth="0.9"/><circle cx={rx} cy={y} r="2" fill="#888"/></g>);})}
     </svg>

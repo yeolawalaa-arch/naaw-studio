@@ -44,7 +44,7 @@ export default function SneakerHigh({ colors, pattern }: { colors: ProductColors
       <path d={STRIPE} fill={`url(#${u}ag)`} stroke={darken(colors.accent,16)} strokeWidth="1.2"/>
       <path d={TONGUE} fill={darken(colors.main,5)} stroke={darken(colors.main,24)} strokeWidth="1.4"/>
       <rect x="264" y="230" width="56" height="22" rx="3" fill={darken(colors.main,26)} opacity="0.78"/>
-      <text x="292" y="245" textAnchor="middle" fill="white" fontSize="8.5" fontWeight="bold" fontFamily="Arial" letterSpacing="2" opacity="0.9">NAAW</text>
+      
       {/* Ankle strap */}
       <path d="M 225,148 L 322,165" stroke={darken(colors.main,18)} strokeWidth="8" strokeLinecap="round"/>
       {/* Laces — two zones */}

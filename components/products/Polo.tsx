@@ -41,7 +41,7 @@ export default function Polo({ colors, pattern }: { colors: ProductColors; patte
       {[148,165,182].map(y => (
         <circle key={y} cx="250" cy={y} r="4.5" fill={darken(colors.accent,20)} stroke={darken(colors.accent,35)} strokeWidth="1"/>
       ))}
-      <text x="250" y="300" textAnchor="middle" fill="rgba(255,255,255,0.12)" fontSize="22" fontWeight="900" fontFamily="Arial" letterSpacing="5">NAAW</text>
+      
     </svg>
   );
 }

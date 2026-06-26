@@ -1,9 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ProductType, ProductColors, TextOverlay } from "../../components/ProductCanvas";
 
 const ProductCanvas = dynamic(() => import("../../components/ProductCanvas"), { ssr: false });
+
+// Free plan: only these 5 products
+const FREE_PRODUCTS: ProductType[] = ["tshirt", "hoodie", "sneaker-low", "cap", "tote"];
 
 const PRODUCTS: { type: ProductType; label: string; category: string }[] = [
   { type: "tshirt", label: "T-Shirt", category: "Tops" },
@@ -85,18 +90,54 @@ const STREET_PRESETS: { name: string; pattern: string; colors: ProductColors }[]
 
 const COLOR_LABELS: (keyof ProductColors)[] = ["main", "secondary", "accent", "detail", "lining"];
 const COLOR_DISPLAY: Record<keyof ProductColors, string> = {
-  main: "Main Color",
-  secondary: "Secondary",
-  accent: "Accent / Stripe",
-  detail: "Detail",
-  lining: "Lining / Inner",
+  main: "Main Color", secondary: "Secondary", accent: "Accent / Stripe", detail: "Detail", lining: "Lining / Inner",
 };
 
 const DEFAULT_COLORS: ProductColors = {
   main: "#111111", secondary: "#1a1a1a", accent: "#FFD700", detail: "#888888", lining: "#222222"
 };
 
+function ProBadge({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-400/20 border border-yellow-400/40 rounded-full text-yellow-400 text-[9px] font-bold hover:bg-yellow-400/30 transition">
+      ★ PRO
+    </button>
+  );
+}
+
+function UpgradeModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#111] border border-white/15 rounded-2xl p-8 max-w-sm w-full">
+        <p className="text-white text-xl font-black mb-1">Upgrade to Pro</p>
+        <p className="text-white/40 text-sm mb-6">Unlock everything — all products, AI design, custom text, and export.</p>
+        <div className="space-y-2 mb-6">
+          {["All 19 product types", "AI design generator", "Custom text & logo overlay", "Export SVG/PNG", "All Indian textile patterns"].map(f => (
+            <div key={f} className="flex items-center gap-2 text-sm text-white/70">
+              <span className="text-yellow-400">✓</span> {f}
+            </div>
+          ))}
+        </div>
+        <div className="text-center mb-4">
+          <span className="text-3xl font-black text-white">$9</span>
+          <span className="text-white/40 text-sm">/month</span>
+        </div>
+        <button className="w-full bg-yellow-400 text-black font-bold py-3 rounded-xl hover:bg-yellow-300 transition text-sm mb-3">
+          Upgrade Now — $9/mo
+        </button>
+        <button onClick={onClose} className="w-full text-white/40 text-xs hover:text-white transition">
+          Maybe later
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function StudioPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const isPro = (session?.user as any)?.plan === "pro";
+
   const [product, setProduct] = useState<ProductType>("tshirt");
   const [activeCategory, setActiveCategory] = useState("Tops");
   const [colors, setColors] = useState<ProductColors>(DEFAULT_COLORS);
@@ -105,23 +146,26 @@ export default function StudioPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"culture" | "street">("culture");
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [textOverlay, setTextOverlay] = useState<TextOverlay>({
-    text: "",
-    color: "#ffffff",
-    size: 28,
-    x: 50,
-    y: 50,
-    font: "Arial",
-    bold: true,
-    italic: false,
-    opacity: 90,
-    _onDrag: (x: number, y: number) => setTextOverlay(prev => ({ ...prev, x, y })),
-  } as TextOverlay);
+    text: "", color: "#ffffff", size: 28, x: 50, y: 50,
+    font: "Arial", bold: true, italic: false, opacity: 90,
+  });
 
-  const updateText = (patch: Partial<TextOverlay>) =>
-    setTextOverlay(prev => ({ ...prev, ...patch }));
+  useEffect(() => {
+    if (status === "unauthenticated") router.push("/login");
+  }, [status, router]);
+
+  if (status === "loading" || status === "unauthenticated") {
+    return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <p className="text-white/40 text-sm">Loading...</p>
+    </div>;
+  }
+
+  const updateText = (patch: Partial<TextOverlay>) => setTextOverlay(prev => ({ ...prev, ...patch }));
 
   const handleAI = async () => {
+    if (!isPro) { setShowUpgrade(true); return; }
     if (!aiPrompt.trim()) return;
     setAiLoading(true);
     setAiResult(null);
@@ -138,33 +182,44 @@ export default function StudioPage() {
       }
       setAiResult(data.description || "Design applied!");
     } catch {
-      setAiResult("AI se connect nahi ho paya, manually design karo.");
+      setAiResult("Could not connect to AI. Try manually.");
     }
     setAiLoading(false);
   };
 
   const handleExport = () => {
+    if (!isPro) { setShowUpgrade(true); return; }
     const svg = document.querySelector("#product-canvas svg") as SVGElement;
     if (!svg) return;
     const blob = new Blob([svg.outerHTML], { type: "image/svg+xml" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `naaw-${product}.svg`;
+    a.download = `design-${product}.svg`;
     a.click();
+  };
+
+  const handleProductSelect = (type: ProductType) => {
+    if (!isPro && !FREE_PRODUCTS.includes(type)) { setShowUpgrade(true); return; }
+    setProduct(type);
   };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans">
+      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
+
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <a href="/" className="text-xl font-black tracking-widest text-white">NAAW</a>
-        <span className="text-xs text-white/40 tracking-widest uppercase">Design Studio</span>
-        <button
-          onClick={handleExport}
-          className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full hover:bg-white/90 transition"
-        >
-          Export SVG
-        </button>
+        <div className="flex items-center gap-3">
+          {!isPro && (
+            <button onClick={() => setShowUpgrade(true)} className="px-3 py-1.5 bg-yellow-400/20 border border-yellow-400/40 rounded-full text-yellow-400 text-xs font-bold hover:bg-yellow-400/30 transition">
+              ★ Upgrade to Pro
+            </button>
+          )}
+          {isPro && <span className="px-3 py-1.5 bg-yellow-400/20 border border-yellow-400/40 rounded-full text-yellow-400 text-xs font-bold">★ Pro</span>}
+          <span className="text-white/40 text-xs">{session?.user?.name}</span>
+          <button onClick={() => signOut({ callbackUrl: "/" })} className="text-white/30 text-xs hover:text-white transition">Sign out</button>
+        </div>
       </header>
 
       <div className="flex flex-col lg:flex-row h-[calc(100vh-65px)]">
@@ -176,75 +231,62 @@ export default function StudioPage() {
             <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Product Type</p>
             <div className="flex gap-2 flex-wrap mb-3">
               {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-semibold transition ${activeCategory === cat ? "bg-white text-black" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
-                >
+                <button key={cat} onClick={() => setActiveCategory(cat)}
+                  className={`px-3 py-1 rounded-full text-[11px] font-semibold transition ${activeCategory === cat ? "bg-white text-black" : "bg-white/10 text-white/60 hover:bg-white/20"}`}>
                   {cat}
                 </button>
               ))}
             </div>
             <div className="grid grid-cols-3 gap-1.5">
-              {PRODUCTS.filter(p => p.category === activeCategory).map(p => (
-                <button
-                  key={p.type}
-                  onClick={() => setProduct(p.type)}
-                  className={`py-2 px-1 rounded-lg text-[11px] font-semibold transition text-center ${product === p.type ? "bg-white text-black" : "bg-white/8 border border-white/10 text-white/70 hover:bg-white/15"}`}
-                >
-                  {p.label}
-                </button>
-              ))}
+              {PRODUCTS.filter(p => p.category === activeCategory).map(p => {
+                const locked = !isPro && !FREE_PRODUCTS.includes(p.type);
+                return (
+                  <button key={p.type} onClick={() => handleProductSelect(p.type)}
+                    className={`py-2 px-1 rounded-lg text-[11px] font-semibold transition text-center relative ${product === p.type ? "bg-white text-black" : locked ? "bg-white/4 border border-white/8 text-white/30" : "bg-white/8 border border-white/10 text-white/70 hover:bg-white/15"}`}>
+                    {p.label}
+                    {locked && <span className="absolute top-1 right-1 text-[8px]">🔒</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* AI Prompt */}
           <div>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">AI Design Generator</p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10px] text-white/40 uppercase tracking-widest">AI Design Generator</p>
+              {!isPro && <ProBadge onClick={() => setShowUpgrade(true)} />}
+            </div>
             <div className="flex gap-2">
-              <input
-                value={aiPrompt}
-                onChange={e => setAiPrompt(e.target.value)}
+              <input value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleAI()}
-                placeholder="e.g. Rajasthani sunset vibes..."
-                className="flex-1 bg-white/8 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/40"
-              />
-              <button
-                onClick={handleAI}
-                disabled={aiLoading}
-                className="px-3 py-2 bg-white text-black text-xs font-bold rounded-xl hover:bg-white/90 disabled:opacity-50 transition"
-              >
+                placeholder={isPro ? "e.g. Rajasthani sunset vibes..." : "Upgrade to Pro to use AI"}
+                disabled={!isPro}
+                className="flex-1 bg-white/8 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/40 disabled:opacity-40" />
+              <button onClick={handleAI} disabled={aiLoading || !isPro}
+                className="px-3 py-2 bg-white text-black text-xs font-bold rounded-xl hover:bg-white/90 disabled:opacity-40 transition">
                 {aiLoading ? "..." : "Go"}
               </button>
             </div>
-            {aiResult && (
-              <p className="mt-2 text-xs text-white/50 leading-relaxed">{aiResult}</p>
-            )}
+            {aiResult && <p className="mt-2 text-xs text-white/50 leading-relaxed">{aiResult}</p>}
           </div>
 
           {/* Presets */}
           <div>
             <div className="flex gap-3 mb-3">
-              <button
-                onClick={() => setActiveTab("culture")}
-                className={`text-[11px] font-bold tracking-wider pb-1 transition border-b-2 ${activeTab === "culture" ? "border-white text-white" : "border-transparent text-white/40"}`}
-              >
+              <button onClick={() => setActiveTab("culture")}
+                className={`text-[11px] font-bold tracking-wider pb-1 transition border-b-2 ${activeTab === "culture" ? "border-white text-white" : "border-transparent text-white/40"}`}>
                 Indian Culture
               </button>
-              <button
-                onClick={() => setActiveTab("street")}
-                className={`text-[11px] font-bold tracking-wider pb-1 transition border-b-2 ${activeTab === "street" ? "border-white text-white" : "border-transparent text-white/40"}`}
-              >
+              <button onClick={() => setActiveTab("street")}
+                className={`text-[11px] font-bold tracking-wider pb-1 transition border-b-2 ${activeTab === "street" ? "border-white text-white" : "border-transparent text-white/40"}`}>
                 Street Style
               </button>
             </div>
             <div className="grid grid-cols-3 gap-1.5">
               {(activeTab === "culture" ? CULTURE_PRESETS : STREET_PRESETS).map(p => (
-                <button
-                  key={p.name}
-                  onClick={() => { setColors(p.colors); setPattern(p.pattern); }}
-                  className="py-2 px-1 rounded-lg text-[10px] font-semibold bg-white/8 border border-white/10 text-white/70 hover:bg-white/15 transition text-center"
-                >
+                <button key={p.name} onClick={() => { setColors(p.colors); setPattern(p.pattern); }}
+                  className="py-2 px-1 rounded-lg text-[10px] font-semibold bg-white/8 border border-white/10 text-white/70 hover:bg-white/15 transition text-center">
                   {p.name}
                 </button>
               ))}
@@ -256,13 +298,9 @@ export default function StudioPage() {
             <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Color Palettes</p>
             <div className="grid grid-cols-4 gap-1.5">
               {PALETTES.map(p => (
-                <button
-                  key={p.name}
-                  onClick={() => setColors(p.colors)}
-                  title={p.name}
+                <button key={p.name} onClick={() => setColors(p.colors)} title={p.name}
                   className="h-8 rounded-lg border border-white/15 hover:scale-105 transition overflow-hidden"
-                  style={{ background: `linear-gradient(135deg, ${p.colors.main} 50%, ${p.colors.accent} 50%)` }}
-                />
+                  style={{ background: `linear-gradient(135deg, ${p.colors.main} 50%, ${p.colors.accent} 50%)` }} />
               ))}
             </div>
           </div>
@@ -273,12 +311,9 @@ export default function StudioPage() {
             <div className="space-y-2">
               {COLOR_LABELS.map(key => (
                 <div key={key} className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={colors[key]}
+                  <input type="color" value={colors[key]}
                     onChange={e => setColors(prev => ({ ...prev, [key]: e.target.value }))}
-                    className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent"
-                  />
+                    className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent" />
                   <span className="text-xs text-white/60">{COLOR_DISPLAY[key]}</span>
                   <span className="ml-auto text-[10px] text-white/30 font-mono">{colors[key].toUpperCase()}</span>
                 </div>
@@ -291,101 +326,88 @@ export default function StudioPage() {
             <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Pattern / Texture</p>
             <div className="grid grid-cols-3 gap-1.5">
               {PATTERNS.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => setPattern(p.id)}
-                  className={`py-2 px-1 rounded-lg text-[10px] font-semibold transition text-center ${pattern === p.id ? "bg-white text-black" : "bg-white/8 border border-white/10 text-white/60 hover:bg-white/15"}`}
-                >
+                <button key={p.id} onClick={() => setPattern(p.id)}
+                  className={`py-2 px-1 rounded-lg text-[10px] font-semibold transition text-center ${pattern === p.id ? "bg-white text-black" : "bg-white/8 border border-white/10 text-white/60 hover:bg-white/15"}`}>
                   {p.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Text / Logo Overlay */}
+          {/* Text / Logo */}
           <div>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Text / Logo</p>
-            <input
-              type="text"
-              value={textOverlay.text}
-              onChange={e => updateText({ text: e.target.value })}
-              placeholder="Apna naam ya brand likho..."
-              className="w-full bg-white/8 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/40 mb-3"
-            />
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              <select
-                value={textOverlay.font}
-                onChange={e => updateText({ font: e.target.value })}
-                className="bg-white/8 border border-white/15 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none"
-              >
-                <option value="Arial">Arial</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Impact">Impact</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Verdana">Verdana</option>
-                <option value="Trebuchet MS">Trebuchet MS</option>
-              </select>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={textOverlay.color}
-                  onChange={e => updateText({ color: e.target.value })}
-                  className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent flex-shrink-0"
-                />
-                <span className="text-[10px] text-white/40">Color</span>
-              </div>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10px] text-white/40 uppercase tracking-widest">Text / Logo</p>
+              {!isPro && <ProBadge onClick={() => setShowUpgrade(true)} />}
             </div>
-            <div className="flex gap-2 mb-2">
-              <button
-                onClick={() => updateText({ bold: !textOverlay.bold })}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${textOverlay.bold ? "bg-white text-black" : "bg-white/10 text-white/60"}`}
-              >B</button>
-              <button
-                onClick={() => updateText({ italic: !textOverlay.italic })}
-                className={`px-3 py-1.5 rounded-lg text-xs italic transition ${textOverlay.italic ? "bg-white text-black" : "bg-white/10 text-white/60"}`}
-              >I</button>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-white/40 w-12">Size</span>
-                <input type="range" min="10" max="80" value={textOverlay.size}
-                  onChange={e => updateText({ size: Number(e.target.value) })}
-                  className="flex-1 accent-white" />
-                <span className="text-[10px] text-white/40 w-6">{textOverlay.size}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-white/40 w-12">Left↔</span>
-                <input type="range" min="5" max="95" value={textOverlay.x}
-                  onChange={e => updateText({ x: Number(e.target.value) })}
-                  className="flex-1 accent-white" />
-                <span className="text-[10px] text-white/40 w-6">{textOverlay.x}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-white/40 w-12">Up↕</span>
-                <input type="range" min="5" max="95" value={textOverlay.y}
-                  onChange={e => updateText({ y: Number(e.target.value) })}
-                  className="flex-1 accent-white" />
-                <span className="text-[10px] text-white/40 w-6">{textOverlay.y}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-white/40 w-12">Opacity</span>
-                <input type="range" min="10" max="100" value={textOverlay.opacity}
-                  onChange={e => updateText({ opacity: Number(e.target.value) })}
-                  className="flex-1 accent-white" />
-                <span className="text-[10px] text-white/40 w-6">{textOverlay.opacity}%</span>
-              </div>
-            </div>
-            {textOverlay.text && (
-              <p className="mt-2 text-[10px] text-white/30">Canvas pe text ko drag karke bhi move kar sakte ho</p>
+            {!isPro ? (
+              <button onClick={() => setShowUpgrade(true)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs text-white/40 hover:bg-white/10 transition text-center">
+                🔒 Upgrade to Pro to add custom text & logo
+              </button>
+            ) : (
+              <>
+                <input type="text" value={textOverlay.text}
+                  onChange={e => updateText({ text: e.target.value })}
+                  placeholder="Type your brand name or logo text..."
+                  className="w-full bg-white/8 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/40 mb-3" />
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <select value={textOverlay.font} onChange={e => updateText({ font: e.target.value })}
+                    className="bg-white/8 border border-white/15 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none">
+                    <option value="Arial">Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Impact">Impact</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Verdana">Verdana</option>
+                  </select>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={textOverlay.color}
+                      onChange={e => updateText({ color: e.target.value })}
+                      className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent flex-shrink-0" />
+                    <span className="text-[10px] text-white/40">Color</span>
+                  </div>
+                </div>
+                <div className="flex gap-2 mb-2">
+                  <button onClick={() => updateText({ bold: !textOverlay.bold })}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${textOverlay.bold ? "bg-white text-black" : "bg-white/10 text-white/60"}`}>B</button>
+                  <button onClick={() => updateText({ italic: !textOverlay.italic })}
+                    className={`px-3 py-1.5 rounded-lg text-xs italic transition ${textOverlay.italic ? "bg-white text-black" : "bg-white/10 text-white/60"}`}>I</button>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { label: "Size", key: "size" as const, min: 10, max: 80 },
+                    { label: "Left ↔", key: "x" as const, min: 5, max: 95 },
+                    { label: "Up ↕", key: "y" as const, min: 5, max: 95 },
+                    { label: "Opacity", key: "opacity" as const, min: 10, max: 100 },
+                  ].map(({ label, key, min, max }) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <span className="text-[10px] text-white/40 w-12">{label}</span>
+                      <input type="range" min={min} max={max} value={textOverlay[key]}
+                        onChange={e => updateText({ [key]: Number(e.target.value) })}
+                        className="flex-1 accent-white" />
+                      <span className="text-[10px] text-white/40 w-8 text-right">{textOverlay[key]}{key === "opacity" ? "%" : ""}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
+          </div>
+
+          {/* Export */}
+          <div>
+            <button onClick={handleExport}
+              className={`w-full py-3 rounded-xl text-sm font-bold transition ${isPro ? "bg-white text-black hover:bg-white/90" : "bg-white/10 text-white/40 hover:bg-white/15"}`}>
+              {isPro ? "Export SVG" : "🔒 Export — Pro Only"}
+            </button>
           </div>
         </div>
 
         {/* Right Panel — Canvas */}
         <div className="flex-1 flex items-center justify-center bg-[#0d0d0d] p-6">
           <div id="product-canvas" className="w-full max-w-xl">
-            <ProductCanvas productType={product} colors={colors} pattern={pattern} textOverlay={textOverlay} />
+            <ProductCanvas productType={product} colors={colors} pattern={pattern}
+              textOverlay={isPro ? textOverlay : undefined} />
           </div>
         </div>
       </div>

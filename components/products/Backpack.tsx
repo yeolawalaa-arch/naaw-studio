@@ -51,7 +51,7 @@ export default function Backpack({ colors, pattern }: { colors: ProductColors; p
       <line x1="125" y1="95" x2="130" y2="355" stroke="rgba(255,255,255,0.1)" strokeWidth="1.2" strokeDasharray="4,5"/>
       <line x1="375" y1="95" x2="370" y2="355" stroke="rgba(255,255,255,0.1)" strokeWidth="1.2" strokeDasharray="4,5"/>
 
-      <text x="250" y="210" textAnchor="middle" fill="rgba(255,255,255,0.12)" fontSize="22" fontWeight="900" fontFamily="Arial" letterSpacing="5">NAAW</text>
+      
     </svg>
   );
 }

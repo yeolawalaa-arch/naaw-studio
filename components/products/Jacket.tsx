@@ -48,7 +48,7 @@ export default function Jacket({ colors, pattern }: { colors: ProductColors; pat
       {/* Accent stripe on sleeve */}
       <path d="M 60,180 L 100,184" stroke={colors.accent} strokeWidth="5" strokeLinecap="round"/>
       <path d="M 440,180 L 400,184" stroke={colors.accent} strokeWidth="5" strokeLinecap="round"/>
-      <text x="250" y="240" textAnchor="middle" fill="rgba(255,255,255,0.12)" fontSize="22" fontWeight="900" fontFamily="Arial" letterSpacing="5">NAAW</text>
+      
     </svg>
   );
 }

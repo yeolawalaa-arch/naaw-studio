@@ -48,7 +48,7 @@ export default function Bomber({ colors, pattern }: { colors: ProductColors; pat
       {[160,185,210,235,260,285,310,335,360].map(y => (
         <rect key={y} x="246" y={y} width="8" height="5" rx="1" fill={colors.detail || "#888"} opacity="0.8"/>
       ))}
-      <text x="250" y="250" textAnchor="middle" fill="rgba(255,255,255,0.12)" fontSize="22" fontWeight="900" fontFamily="Arial" letterSpacing="5">NAAW</text>
+      
     </svg>
   );
 }

@@ -44,7 +44,7 @@ export default function Beanie({ colors, pattern }: { colors: ProductColors; pat
       <circle cx="250" cy="30" r="22" fill={colors.accent} stroke={darken(colors.accent,20)} strokeWidth="1.5"/>
       <circle cx="242" cy="24" r="7" fill={lighten(colors.accent,30)} opacity="0.4"/>
 
-      <text x="250" y="200" textAnchor="middle" fill="rgba(255,255,255,0.14)" fontSize="20" fontWeight="900" fontFamily="Arial" letterSpacing="4">NAAW</text>
+      
     </svg>
   );
 }

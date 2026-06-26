@@ -33,7 +33,7 @@ export default function TShirt({ colors, pattern }: { colors: ProductColors; pat
       <PatternOverlay u={u} path={BODY} colors={colors} pattern={pattern} clipId={`${u}bc`}/>
       <path d={COLLAR} fill={darken(colors.main,12)} stroke={darken(colors.main,32)} strokeWidth="1.5"/>
       <line x1="250" y1="108" x2="250" y2="380" stroke="rgba(255,255,255,0.07)" strokeWidth="1.5" strokeDasharray="6,6"/>
-      <text x="250" y="270" textAnchor="middle" fill="rgba(255,255,255,0.12)" fontSize="28" fontWeight="900" fontFamily="Arial" letterSpacing="6">NAAW</text>
+      
     </svg>
   );
 }
