@@ -2,6 +2,8 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { findUser } from "../../../../lib/users";
 
+const PRO_EMAILS = ["adnanyeola07@gmail.com"];
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -14,7 +16,8 @@ const handler = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
         const user = await findUser(credentials.email, credentials.password);
         if (!user) return null;
-        return { id: user.id, name: user.name, email: user.email, plan: user.plan };
+        const plan = PRO_EMAILS.includes(user.email) ? "pro" : user.plan;
+        return { id: user.id, name: user.name, email: user.email, plan };
       },
     }),
   ],
