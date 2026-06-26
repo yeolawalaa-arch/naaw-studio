@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { ProductType, ProductColors } from "../../components/ProductCanvas";
+import { ProductType, ProductColors, TextOverlay } from "../../components/ProductCanvas";
 
 const ProductCanvas = dynamic(() => import("../../components/ProductCanvas"), { ssr: false });
 
@@ -105,6 +105,21 @@ export default function StudioPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"culture" | "street">("culture");
+  const [textOverlay, setTextOverlay] = useState<TextOverlay>({
+    text: "",
+    color: "#ffffff",
+    size: 28,
+    x: 50,
+    y: 50,
+    font: "Arial",
+    bold: true,
+    italic: false,
+    opacity: 90,
+    _onDrag: (x: number, y: number) => setTextOverlay(prev => ({ ...prev, x, y })),
+  } as TextOverlay);
+
+  const updateText = (patch: Partial<TextOverlay>) =>
+    setTextOverlay(prev => ({ ...prev, ...patch }));
 
   const handleAI = async () => {
     if (!aiPrompt.trim()) return;
@@ -286,12 +301,91 @@ export default function StudioPage() {
               ))}
             </div>
           </div>
+
+          {/* Text / Logo Overlay */}
+          <div>
+            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Text / Logo</p>
+            <input
+              type="text"
+              value={textOverlay.text}
+              onChange={e => updateText({ text: e.target.value })}
+              placeholder="Apna naam ya brand likho..."
+              className="w-full bg-white/8 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/40 mb-3"
+            />
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <select
+                value={textOverlay.font}
+                onChange={e => updateText({ font: e.target.value })}
+                className="bg-white/8 border border-white/15 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none"
+              >
+                <option value="Arial">Arial</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Impact">Impact</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Trebuchet MS">Trebuchet MS</option>
+              </select>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={textOverlay.color}
+                  onChange={e => updateText({ color: e.target.value })}
+                  className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent flex-shrink-0"
+                />
+                <span className="text-[10px] text-white/40">Color</span>
+              </div>
+            </div>
+            <div className="flex gap-2 mb-2">
+              <button
+                onClick={() => updateText({ bold: !textOverlay.bold })}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition ${textOverlay.bold ? "bg-white text-black" : "bg-white/10 text-white/60"}`}
+              >B</button>
+              <button
+                onClick={() => updateText({ italic: !textOverlay.italic })}
+                className={`px-3 py-1.5 rounded-lg text-xs italic transition ${textOverlay.italic ? "bg-white text-black" : "bg-white/10 text-white/60"}`}
+              >I</button>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/40 w-12">Size</span>
+                <input type="range" min="10" max="80" value={textOverlay.size}
+                  onChange={e => updateText({ size: Number(e.target.value) })}
+                  className="flex-1 accent-white" />
+                <span className="text-[10px] text-white/40 w-6">{textOverlay.size}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/40 w-12">Left↔</span>
+                <input type="range" min="5" max="95" value={textOverlay.x}
+                  onChange={e => updateText({ x: Number(e.target.value) })}
+                  className="flex-1 accent-white" />
+                <span className="text-[10px] text-white/40 w-6">{textOverlay.x}%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/40 w-12">Up↕</span>
+                <input type="range" min="5" max="95" value={textOverlay.y}
+                  onChange={e => updateText({ y: Number(e.target.value) })}
+                  className="flex-1 accent-white" />
+                <span className="text-[10px] text-white/40 w-6">{textOverlay.y}%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/40 w-12">Opacity</span>
+                <input type="range" min="10" max="100" value={textOverlay.opacity}
+                  onChange={e => updateText({ opacity: Number(e.target.value) })}
+                  className="flex-1 accent-white" />
+                <span className="text-[10px] text-white/40 w-6">{textOverlay.opacity}%</span>
+              </div>
+            </div>
+            {textOverlay.text && (
+              <p className="mt-2 text-[10px] text-white/30">Canvas pe text ko drag karke bhi move kar sakte ho</p>
+            )}
+          </div>
         </div>
 
         {/* Right Panel — Canvas */}
         <div className="flex-1 flex items-center justify-center bg-[#0d0d0d] p-6">
           <div id="product-canvas" className="w-full max-w-xl">
-            <ProductCanvas productType={product} colors={colors} pattern={pattern} />
+            <ProductCanvas productType={product} colors={colors} pattern={pattern} textOverlay={textOverlay} />
           </div>
         </div>
       </div>
