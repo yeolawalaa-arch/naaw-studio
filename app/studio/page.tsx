@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { ProductType, ProductColors, TextOverlay } from "../../components/ProductCanvas";
 
 const ProductCanvas = dynamic(() => import("../../components/ProductCanvas"), { ssr: false });
+const Product3DViewer = dynamic(() => import("../../components/Product3DViewer"), { ssr: false });
 
 // Free plan: only these 5 products
 const FREE_PRODUCTS: ProductType[] = ["tshirt", "hoodie", "sneaker-low", "cap", "tote"];
@@ -30,9 +31,19 @@ const PRODUCTS: { type: ProductType; label: string; category: string }[] = [
   { type: "bucket-hat", label: "Bucket Hat", category: "Hats" },
   { type: "backpack", label: "Backpack", category: "Bags" },
   { type: "tote", label: "Tote Bag", category: "Bags" },
+  { type: "watch", label: "Watch", category: "Accessories" },
+  { type: "sunglasses", label: "Sunglasses", category: "Accessories" },
+  { type: "belt", label: "Belt", category: "Accessories" },
+  { type: "chain", label: "Chain", category: "Accessories" },
+  { type: "wallet", label: "Wallet", category: "Accessories" },
+  { type: "scarf", label: "Scarf", category: "Accessories" },
+  { type: "socks", label: "Socks", category: "Accessories" },
+  { type: "phone-case", label: "Phone Case", category: "Accessories" },
+  { type: "ring", label: "Ring", category: "Accessories" },
+  { type: "earrings", label: "Earrings", category: "Accessories" },
 ];
 
-const CATEGORIES = ["Tops", "Bottoms", "Footwear", "Hats", "Bags"];
+const CATEGORIES = ["Tops", "Bottoms", "Footwear", "Hats", "Bags", "Accessories"];
 
 const PATTERN_STYLES: { id: string; label: string; patterns: { id: string; label: string }[] }[] = [
   { id: "basic", label: "Basic", patterns: [
@@ -187,6 +198,7 @@ export default function StudioPage() {
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"culture" | "street">("culture");
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [view3D, setView3D] = useState(false);
   const [patternStyle, setPatternStyle] = useState("basic");
   const [patternZone, setPatternZone] = useState("full");
   const [patternIntensity, setPatternIntensity] = useState(70);
@@ -479,11 +491,32 @@ export default function StudioPage() {
         </div>
 
         {/* Right Panel — Canvas */}
-        <div className="flex-1 flex items-center justify-center bg-[#0d0d0d] p-6">
-          <div id="product-canvas" className="w-full max-w-xl">
-            <ProductCanvas productType={product} colors={colors} pattern={pattern}
-              patternIntensity={patternIntensity} patternZone={patternZone}
-              textOverlay={isPro ? textOverlay : undefined} />
+        <div className="flex-1 flex flex-col bg-[#0d0d0d]">
+          {/* View toggle */}
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <button onClick={() => setView3D(false)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${!view3D ? "bg-white text-black" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
+              2D Flat
+            </button>
+            <button onClick={() => setView3D(true)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${view3D ? "bg-white text-black" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
+              ✦ 3D Live Preview
+            </button>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center p-6">
+            {view3D ? (
+              <div className="w-full max-w-xl" style={{ height: "480px" }}>
+                <Product3DViewer productType={product} colors={colors} pattern={pattern}/>
+                <p className="text-center text-white/25 text-[10px] mt-2">Drag to rotate · Scroll to zoom</p>
+              </div>
+            ) : (
+              <div id="product-canvas" className="w-full max-w-xl">
+                <ProductCanvas productType={product} colors={colors} pattern={pattern}
+                  patternIntensity={patternIntensity} patternZone={patternZone}
+                  textOverlay={isPro ? textOverlay : undefined} />
+              </div>
+            )}
           </div>
         </div>
       </div>

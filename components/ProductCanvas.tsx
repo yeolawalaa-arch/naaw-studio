@@ -13,7 +13,8 @@ export type ProductType =
   | "shorts" | "joggers" | "jeans"
   | "sneaker-low" | "sneaker-high" | "boot" | "sandal" | "slip-on"
   | "cap" | "beanie" | "bucket-hat"
-  | "backpack" | "tote";
+  | "backpack" | "tote"
+  | "watch" | "sunglasses" | "belt" | "chain" | "wallet" | "scarf" | "socks" | "phone-case" | "ring" | "earrings";
 
 export interface TextOverlay {
   text: string;
@@ -51,7 +52,30 @@ const products: Record<ProductType, React.ComponentType<{colors: ProductColors; 
   "bucket-hat":   dynamic(() => import("./products/BucketHat")),
   "backpack":     dynamic(() => import("./products/Backpack")),
   "tote":         dynamic(() => import("./products/Tote")),
+  // Accessories — 3D only, show prompt in 2D view
+  "watch": () => <AccessoryPrompt label="Watch"/>,
+  "sunglasses": () => <AccessoryPrompt label="Sunglasses"/>,
+  "belt": () => <AccessoryPrompt label="Belt"/>,
+  "chain": () => <AccessoryPrompt label="Chain"/>,
+  "wallet": () => <AccessoryPrompt label="Wallet"/>,
+  "scarf": () => <AccessoryPrompt label="Scarf"/>,
+  "socks": () => <AccessoryPrompt label="Socks"/>,
+  "phone-case": () => <AccessoryPrompt label="Phone Case"/>,
+  "ring": () => <AccessoryPrompt label="Ring"/>,
+  "earrings": () => <AccessoryPrompt label="Earrings"/>,
 };
+
+function AccessoryPrompt({ label }: { label: string }) {
+  return (
+    <div className="w-full flex items-center justify-center" style={{ background: "#111", aspectRatio: "1/1" }}>
+      <div className="text-center">
+        <p className="text-white/20 text-4xl mb-3">✦</p>
+        <p className="text-white/50 text-sm font-bold">{label}</p>
+        <p className="text-white/25 text-xs mt-1">Switch to 3D Live Preview to see this product</p>
+      </div>
+    </div>
+  );
+}
 
 export default function ProductCanvas({ productType, colors, pattern, textOverlay, patternIntensity, patternZone }: {
   productType: ProductType;
