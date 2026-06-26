@@ -1,8 +1,15 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { findUser } from "../../../../lib/users";
+import { findUser, createUser } from "../../../../lib/users";
+import bcrypt from "bcryptjs";
 
-const PRO_EMAILS = ["adnanyeola07@gmail.com"];
+// Hardcoded owner account — always works regardless of server restarts
+const OWNER = {
+  email: process.env.OWNER_EMAIL || "",
+  hash: process.env.OWNER_HASH || "",
+  name: "Adnan",
+  plan: "pro" as const,
+};
 
 const handler = NextAuth({
   providers: [
@@ -14,10 +21,18 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const user = await findUser(credentials.email, credentials.password);
+
+        // Check owner account first
+        if (OWNER.email && credentials.email === OWNER.email) {
+          const ok = await bcrypt.compare(credentials.password, OWNER.hash);
+          if (ok) return { id: "owner", name: OWNER.name, email: OWNER.email, plan: OWNER.plan };
+          return null;
+        }
+
+        // Regular users from in-memory store
+        let user = await findUser(credentials.email, credentials.password);
         if (!user) return null;
-        const plan = PRO_EMAILS.includes(user.email) ? "pro" : user.plan;
-        return { id: user.id, name: user.name, email: user.email, plan };
+        return { id: user.id, name: user.name, email: user.email, plan: user.plan };
       },
     }),
   ],
