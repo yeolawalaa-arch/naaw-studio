@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Backpack({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Backpack({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `bp${Math.random().toString(36).slice(2,5)}`;
   const BODY = `M 120,80 C 120,62 135,52 250,52 C 365,52 380,62 380,80 L 395,360 C 395,375 330,385 250,385 C 170,385 105,375 105,360 Z`;
   const FRONT_POCKET = `M 148,240 L 148,340 C 148,350 195,356 250,356 C 305,356 352,350 352,340 L 352,240 C 352,230 305,224 250,224 C 195,224 148,230 148,240 Z`;

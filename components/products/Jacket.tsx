@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Jacket({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Jacket({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `jk${Math.random().toString(36).slice(2,5)}`;
   const BODY = `M 155,105 L 68,148 L 46,240 L 100,250 L 100,420 L 400,420 L 400,250 L 454,240 L 432,148 L 345,105 C 322,125 296,136 250,136 C 204,136 178,125 155,105 Z`;
   const SLEEVE_L = `M 155,105 C 124,88 78,92 62,148 L 38,248 L 100,260 L 118,178 C 130,138 146,112 155,105 Z`;

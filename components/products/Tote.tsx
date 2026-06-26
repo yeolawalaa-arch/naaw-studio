@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Tote({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Tote({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `tt${Math.random().toString(36).slice(2,5)}`;
   const BODY = `M 100,120 L 88,370 C 88,382 162,392 250,392 C 338,392 412,382 412,370 L 400,120 Z`;
   const HANDLE_L = `M 148,120 C 138,80 148,48 175,40 C 195,34 210,44 215,68 L 218,120 Z`;

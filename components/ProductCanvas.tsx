@@ -31,7 +31,7 @@ export interface TextOverlay {
 import dynamic from "next/dynamic";
 import React, { useRef, useState } from "react";
 
-const products: Record<ProductType, React.ComponentType<{colors: ProductColors; pattern: string}>> = {
+const products: Record<ProductType, React.ComponentType<{colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string}>> = {
   "tshirt":       dynamic(() => import("./products/TShirt")),
   "shirt":        dynamic(() => import("./products/Shirt")),
   "polo":         dynamic(() => import("./products/Polo")),
@@ -53,11 +53,13 @@ const products: Record<ProductType, React.ComponentType<{colors: ProductColors; 
   "tote":         dynamic(() => import("./products/Tote")),
 };
 
-export default function ProductCanvas({ productType, colors, pattern, textOverlay }: {
+export default function ProductCanvas({ productType, colors, pattern, textOverlay, patternIntensity, patternZone }: {
   productType: ProductType;
   colors: ProductColors;
   pattern: string;
   textOverlay?: TextOverlay;
+  patternIntensity?: number;
+  patternZone?: string;
 }) {
   const Component = products[productType];
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -81,7 +83,7 @@ export default function ProductCanvas({ productType, colors, pattern, textOverla
       onMouseUp={() => setDragging(false)}
       onMouseLeave={() => setDragging(false)}
     >
-      <Component colors={colors} pattern={pattern} />
+      <Component colors={colors} pattern={pattern} patternIntensity={patternIntensity} patternZone={patternZone} />
       {textOverlay?.text && (
         <div
           className="absolute inset-0 pointer-events-none"

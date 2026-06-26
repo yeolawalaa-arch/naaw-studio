@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Joggers({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Joggers({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `jg${Math.random().toString(36).slice(2,5)}`;
   const LEFT_LEG = `M 118,82 L 70,380 C 75,396 130,402 165,400 L 185,240 L 250,200 L 250,82 Z`;
   const RIGHT_LEG = `M 382,82 L 430,380 C 425,396 370,402 335,400 L 315,240 L 250,200 L 250,82 Z`;

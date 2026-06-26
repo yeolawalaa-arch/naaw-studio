@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function SneakerHigh({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function SneakerHigh({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `sh2${Math.random().toString(36).slice(2,5)}`;
   const UPPER = `M 30,290 C 28,268 28,242 36,214 C 46,182 70,158 104,140 C 136,122 174,112 220,108 C 248,106 268,108 284,118 C 274,130 266,148 264,170 L 262,205 C 282,180 310,162 344,152 C 382,140 428,136 472,142 C 506,148 528,162 542,182 C 556,202 562,228 560,255 L 558,290 Z`;
   const ANKLE = `M 284,118 C 278,110 268,105 258,104 C 248,103 238,106 230,112 C 222,108 268,108 284,118 Z M 230,112 L 225,145 L 264,170 L 275,130 Z`;

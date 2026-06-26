@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Hoodie({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Hoodie({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `hd${Math.random().toString(36).slice(2,5)}`;
   const BODY = `M 158,118 L 72,155 L 50,230 L 100,238 L 100,420 L 400,420 L 400,238 L 450,230 L 428,155 L 342,118 C 318,140 295,152 250,152 C 205,152 182,140 158,118 Z`;
   const SLEEVE_L = `M 158,118 C 130,104 85,106 66,155 L 44,236 L 100,246 L 120,172 C 132,138 148,120 158,118 Z`;

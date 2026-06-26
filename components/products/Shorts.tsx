@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Shorts({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Shorts({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `sq${Math.random().toString(36).slice(2,5)}`;
   const LEFT_LEG = `M 120,80 L 80,320 L 180,330 L 250,200 L 250,80 Z`;
   const RIGHT_LEG = `M 380,80 L 420,320 L 320,330 L 250,200 L 250,80 Z`;

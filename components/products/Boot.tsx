@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Boot({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Boot({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `bt${Math.random().toString(36).slice(2,5)}`;
   const SHAFT = `M 180,60 C 175,60 168,65 165,75 L 152,310 L 380,310 L 367,75 C 364,65 357,60 352,60 Z`;
   const TOE = `M 105,330 C 100,320 100,312 115,308 L 380,308 L 380,330 C 360,345 300,352 220,352 C 160,352 110,342 105,330 Z`;

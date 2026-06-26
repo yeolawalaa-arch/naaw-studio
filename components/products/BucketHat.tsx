@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function BucketHat({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function BucketHat({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `bh${Math.random().toString(36).slice(2,5)}`;
   const CROWN = `M 170,220 C 165,170 175,120 195,95 C 215,70 235,62 250,62 C 265,62 285,70 305,95 C 325,120 335,170 330,220 Z`;
   const BRIM = `M 80,232 C 75,242 78,258 96,266 C 130,278 190,284 250,284 C 310,284 370,278 404,266 C 422,258 425,242 420,232 L 335,224 L 165,224 Z`;

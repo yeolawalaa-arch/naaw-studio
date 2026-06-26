@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Bomber({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Bomber({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `bm${Math.random().toString(36).slice(2,5)}`;
   const BODY = `M 152,112 L 62,158 L 42,250 L 100,258 L 100,390 C 100,402 170,412 250,412 C 330,412 400,402 400,390 L 400,258 L 458,250 L 438,158 L 348,112 C 325,130 296,140 250,140 C 204,140 175,130 152,112 Z`;
   const SLEEVE_L = `M 152,112 C 118,94 70,98 54,158 L 32,256 L 100,268 L 118,182 C 130,142 146,116 152,112 Z`;

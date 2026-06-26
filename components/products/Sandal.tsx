@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Sandal({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Sandal({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `sd${Math.random().toString(36).slice(2,5)}`;
   const SOLE = `M 60,290 C 55,278 55,268 65,262 L 440,262 C 450,268 450,278 445,290 C 420,308 340,316 250,316 C 160,316 80,308 60,290 Z`;
   const FOOTBED = `M 65,262 L 440,262 L 438,272 L 67,272 Z`;

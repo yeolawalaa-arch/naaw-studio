@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Jeans({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Jeans({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `jn${Math.random().toString(36).slice(2,5)}`;
   const LEFT_LEG = `M 118,90 L 82,430 L 178,435 L 200,250 L 250,210 L 250,90 Z`;
   const RIGHT_LEG = `M 382,90 L 418,430 L 322,435 L 300,250 L 250,210 L 250,90 Z`;

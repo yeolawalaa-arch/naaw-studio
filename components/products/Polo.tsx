@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Polo({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Polo({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `pl${Math.random().toString(36).slice(2,5)}`;
   const BODY = `M 162,100 L 78,132 L 58,192 L 102,200 L 102,400 L 398,400 L 398,200 L 442,192 L 422,132 L 338,100 C 316,118 294,128 250,128 C 206,128 184,118 162,100 Z`;
   const SLEEVE_L = `M 162,100 C 136,88 92,90 72,132 L 52,198 L 102,208 L 120,146 C 132,114 148,102 162,100 Z`;

@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Beanie({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Beanie({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `bn${Math.random().toString(36).slice(2,5)}`;
   const BODY = `M 140,280 C 130,220 130,160 148,120 C 166,80 200,58 250,55 C 300,58 334,80 352,120 C 370,160 370,220 360,280 Z`;
   const POM = `M 250,52 C 230,42 222,30 228,20 C 234,10 250,8 250,8 C 250,8 266,10 272,20 C 278,30 270,42 250,52 Z`;

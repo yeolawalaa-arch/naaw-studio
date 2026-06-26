@@ -34,19 +34,59 @@ const PRODUCTS: { type: ProductType; label: string; category: string }[] = [
 
 const CATEGORIES = ["Tops", "Bottoms", "Footwear", "Hats", "Bags"];
 
-const PATTERNS = [
-  { id: "solid", label: "Solid" },
-  { id: "gradient", label: "Gradient" },
-  { id: "bandhani", label: "Bandhani" },
-  { id: "ikat", label: "Ikat" },
-  { id: "ajrakh", label: "Ajrakh" },
-  { id: "phulkari", label: "Phulkari" },
-  { id: "kalamkari", label: "Kalamkari" },
-  { id: "madhubani", label: "Madhubani" },
-  { id: "warli", label: "Warli" },
-  { id: "leheriya", label: "Leheriya" },
-  { id: "geometric", label: "Geometric" },
-  { id: "camo", label: "Camo" },
+const PATTERN_STYLES: { id: string; label: string; patterns: { id: string; label: string }[] }[] = [
+  { id: "basic", label: "Basic", patterns: [
+    { id: "solid", label: "Solid" },
+    { id: "gradient", label: "Gradient" },
+    { id: "camo", label: "Camo" },
+    { id: "tiedye", label: "Tie-Dye" },
+  ]},
+  { id: "indian", label: "🇮🇳 Indian", patterns: [
+    { id: "bandhani", label: "Bandhani" },
+    { id: "ikat", label: "Ikat" },
+    { id: "ajrakh", label: "Ajrakh" },
+    { id: "phulkari", label: "Phulkari" },
+    { id: "kalamkari", label: "Kalamkari" },
+    { id: "madhubani", label: "Madhubani" },
+    { id: "warli", label: "Warli" },
+    { id: "leheriya", label: "Leheriya" },
+    { id: "paisley", label: "Paisley" },
+    { id: "geometric", label: "Geometric" },
+  ]},
+  { id: "japanese", label: "🇯🇵 Japanese", patterns: [
+    { id: "sashiko", label: "Sashiko" },
+    { id: "asanoha", label: "Asanoha" },
+    { id: "seigaiha", label: "Seigaiha" },
+    { id: "wave", label: "Wave" },
+  ]},
+  { id: "african", label: "🌍 African", patterns: [
+    { id: "kente", label: "Kente" },
+    { id: "ankara", label: "Ankara" },
+    { id: "mudcloth", label: "Mudcloth" },
+  ]},
+  { id: "middleeast", label: "🕌 Middle East", patterns: [
+    { id: "arabesque", label: "Arabesque" },
+    { id: "mosaic", label: "Mosaic" },
+  ]},
+  { id: "western", label: "🌎 Western", patterns: [
+    { id: "plaid", label: "Plaid" },
+    { id: "pinstripe", label: "Pinstripe" },
+    { id: "denim", label: "Denim" },
+  ]},
+  { id: "minimal", label: "◻ Minimal", patterns: [
+    { id: "dots", label: "Dots" },
+    { id: "grid", label: "Grid" },
+    { id: "diagonal", label: "Diagonal" },
+  ]},
+];
+
+const ZONES = [
+  { id: "full", label: "Full" },
+  { id: "upper", label: "Upper Half" },
+  { id: "lower", label: "Lower Half" },
+  { id: "center", label: "Center" },
+  { id: "left", label: "Left Side" },
+  { id: "right", label: "Right Side" },
 ];
 
 const PALETTES: { name: string; colors: ProductColors }[] = [
@@ -147,6 +187,9 @@ export default function StudioPage() {
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"culture" | "street">("culture");
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [patternStyle, setPatternStyle] = useState("basic");
+  const [patternZone, setPatternZone] = useState("full");
+  const [patternIntensity, setPatternIntensity] = useState(70);
   const [textOverlay, setTextOverlay] = useState<TextOverlay>({
     text: "", color: "#ffffff", size: 28, x: 50, y: 50,
     font: "Arial", bold: true, italic: false, opacity: 90,
@@ -321,14 +364,46 @@ export default function StudioPage() {
             </div>
           </div>
 
-          {/* Pattern Picker */}
+          {/* Pattern / Texture */}
           <div>
             <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Pattern / Texture</p>
-            <div className="grid grid-cols-3 gap-1.5">
-              {PATTERNS.map(p => (
+
+            {/* Style tabs */}
+            <div className="flex gap-1.5 flex-wrap mb-3">
+              {PATTERN_STYLES.map(s => (
+                <button key={s.id} onClick={() => setPatternStyle(s.id)}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-semibold transition ${patternStyle === s.id ? "bg-white text-black" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Patterns for selected style */}
+            <div className="grid grid-cols-3 gap-1.5 mb-4">
+              {(PATTERN_STYLES.find(s => s.id === patternStyle)?.patterns ?? []).map(p => (
                 <button key={p.id} onClick={() => setPattern(p.id)}
                   className={`py-2 px-1 rounded-lg text-[10px] font-semibold transition text-center ${pattern === p.id ? "bg-white text-black" : "bg-white/8 border border-white/10 text-white/60 hover:bg-white/15"}`}>
                   {p.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Intensity slider */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] text-white/40 w-16">Intensity</span>
+              <input type="range" min="10" max="100" value={patternIntensity}
+                onChange={e => setPatternIntensity(Number(e.target.value))}
+                className="flex-1 accent-white"/>
+              <span className="text-[10px] text-white/40 w-8 text-right">{patternIntensity}%</span>
+            </div>
+
+            {/* Zone picker */}
+            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Apply Pattern To</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {ZONES.map(z => (
+                <button key={z.id} onClick={() => setPatternZone(z.id)}
+                  className={`py-2 px-1 rounded-lg text-[10px] font-semibold transition text-center ${patternZone === z.id ? "bg-white text-black" : "bg-white/8 border border-white/10 text-white/60 hover:bg-white/15"}`}>
+                  {z.label}
                 </button>
               ))}
             </div>
@@ -407,6 +482,7 @@ export default function StudioPage() {
         <div className="flex-1 flex items-center justify-center bg-[#0d0d0d] p-6">
           <div id="product-canvas" className="w-full max-w-xl">
             <ProductCanvas productType={product} colors={colors} pattern={pattern}
+              patternIntensity={patternIntensity} patternZone={patternZone}
               textOverlay={isPro ? textOverlay : undefined} />
           </div>
         </div>

@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function Cap({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function Cap({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `cp${Math.random().toString(36).slice(2,5)}`;
   const CROWN = `M 80,220 C 80,140 155,80 250,80 C 345,80 420,140 420,220 Z`;
   const BRIM = `M 60,228 C 50,232 42,240 44,252 C 46,262 58,268 90,270 L 440,270 C 460,268 470,260 468,250 C 466,240 456,232 440,228 Z`;

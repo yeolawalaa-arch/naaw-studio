@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function SlipOn({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function SlipOn({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `so${Math.random().toString(36).slice(2,5)}`;
   const UPPER = `M 40,230 C 36,210 36,186 44,162 C 52,138 72,118 104,106 C 136,94 178,90 224,90 C 270,90 325,95 375,112 C 415,126 440,148 450,174 C 458,196 456,220 452,235 Z`;
   const COLLAR = `M 220,90 C 230,80 260,76 286,82 C 278,92 270,100 265,110 L 248,105 L 224,90 Z`;

@@ -2,7 +2,7 @@
 import { ProductColors } from "../ProductCanvas";
 import { makePatternDefs, PatternOverlay, lighten, darken } from "../patternUtils";
 
-export default function TShirt({ colors, pattern }: { colors: ProductColors; pattern: string }) {
+export default function TShirt({ colors, pattern, patternIntensity = 70, patternZone = "full" }: { colors: ProductColors; pattern: string; patternIntensity?: number; patternZone?: string }) {
   const u = `ts${Math.random().toString(36).slice(2,5)}`;
   const BODY = `M 160,80 L 80,110 L 60,170 L 100,178 L 100,380 L 400,380 L 400,178 L 440,170 L 420,110 L 340,80 C 320,100 300,112 250,112 C 200,112 180,100 160,80 Z`;
   const SLEEVE_L = `M 160,80 C 140,70 100,72 80,110 L 60,170 L 100,178 L 118,128 C 130,100 148,86 160,80 Z`;
