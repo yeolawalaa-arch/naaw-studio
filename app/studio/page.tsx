@@ -12,6 +12,12 @@ const Product3DViewer = dynamic(() => import("../../components/Product3DViewer")
 // Free plan: only these 5 products
 const FREE_PRODUCTS: ProductType[] = ["tshirt", "hoodie", "sneaker-low", "cap", "tote"];
 
+// Products with no 2D flat render — auto-open the 3D Live Preview on select.
+const THREE_D_ONLY = new Set<ProductType>([
+  "watch", "sunglasses", "belt", "chain", "wallet", "scarf", "socks", "phone-case", "ring", "earrings",
+  "lehenga", "anarkali", "salwar-kameez", "kurti", "kurta", "sherwani", "nehru-jacket", "pathani", "dhoti",
+]);
+
 type Audience = "men" | "women"; // omitted = unisex (shows for everyone)
 const PRODUCTS: { type: ProductType; label: string; category: string; audience?: Audience }[] = [
   { type: "tshirt", label: "T-Shirt", category: "Tops" },
@@ -23,7 +29,18 @@ const PRODUCTS: { type: ProductType; label: string; category: string; audience?:
   { type: "shorts", label: "Shorts", category: "Bottoms" },
   { type: "joggers", label: "Joggers", category: "Bottoms" },
   { type: "jeans", label: "Jeans", category: "Bottoms" },
+  // Traditional — Women
   { type: "saree", label: "Saree", category: "Traditional", audience: "women" },
+  { type: "lehenga", label: "Lehenga", category: "Traditional", audience: "women" },
+  { type: "anarkali", label: "Anarkali Suit", category: "Traditional", audience: "women" },
+  { type: "salwar-kameez", label: "Salwar Kameez", category: "Traditional", audience: "women" },
+  { type: "kurti", label: "Kurti", category: "Traditional", audience: "women" },
+  // Traditional — Men
+  { type: "kurta", label: "Kurta", category: "Traditional", audience: "men" },
+  { type: "sherwani", label: "Sherwani", category: "Traditional", audience: "men" },
+  { type: "nehru-jacket", label: "Nehru Jacket", category: "Traditional", audience: "men" },
+  { type: "pathani", label: "Pathani Suit", category: "Traditional", audience: "men" },
+  { type: "dhoti", label: "Dhoti", category: "Traditional", audience: "men" },
   { type: "sneaker-low", label: "Sneaker Low", category: "Footwear" },
   { type: "sneaker-high", label: "Sneaker High", category: "Footwear" },
   { type: "boot", label: "Boot", category: "Footwear" },
@@ -324,6 +341,7 @@ export default function StudioPage() {
     if (!isPro && !FREE_PRODUCTS.includes(type)) { setShowUpgrade(true); return; }
     setProduct(type);
     setOptions(defaultOptions(type));
+    if (THREE_D_ONLY.has(type)) setView3D(true);
   };
 
   const handlePrintUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

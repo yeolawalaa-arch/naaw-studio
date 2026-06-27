@@ -60,6 +60,14 @@ export const FABRICS: Record<string, FabricSpec> = {
   georgette: { roughness: 0.40, clearcoat: 0.3,  sheen: 0.5 },
   chiffon:   { roughness: 0.35, clearcoat: 0.3,  sheen: 0.55 },
   corduroy:  { roughness: 0.88, clearcoat: 0.0,  sheen: 0.25 },
+  // Rich traditional / ethnic fabrics
+  brocade:   { roughness: 0.40, clearcoat: 0.3,  sheen: 0.7,  metalness: 0.25 },
+  banarasi:  { roughness: 0.32, clearcoat: 0.5,  sheen: 0.85, metalness: 0.18 },
+  jacquard:  { roughness: 0.50, clearcoat: 0.2,  sheen: 0.5 },
+  organza:   { roughness: 0.30, clearcoat: 0.4,  sheen: 0.6 },
+  net:       { roughness: 0.60, clearcoat: 0.1,  sheen: 0.25 },
+  khadi:     { roughness: 0.95, clearcoat: 0.0,  sheen: 0.0 },
+  cashmere:  { roughness: 0.88, clearcoat: 0.0,  sheen: 0.2 },
 };
 
 export interface GemSpec { color: string; transmission: number; roughness: number; metalness: number }
@@ -162,10 +170,73 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
   ],
 
   // ── TRADITIONAL ──
+  // Women
   saree: [
-    FABRIC_OPT("silk", [["silk","Silk"],["georgette","Georgette"],["chiffon","Chiffon"],["cotton","Cotton"],["satin","Satin"]]),
-    { id: "border", label: "Border / Zari", default: "gold", choices: [M("gold","Gold Zari"),M("silver","Silver Zari"),M("copper","Copper"),M("bronze","Antique")] },
+    FABRIC_OPT("silk", [["silk","Silk"],["georgette","Georgette"],["chiffon","Chiffon"],["cotton","Cotton"],["satin","Satin"],["banarasi","Banarasi"],["organza","Organza"],["net","Net"]]),
+    { id: "border", label: "Border / Zari", default: "gold", choices: [M("gold","Gold Zari"),M("silver","Silver Zari"),M("copper","Copper"),M("bronze","Antique"),M("rose-gold","Rose Gold")] },
     { id: "drape", label: "Drape", default: "nivi", choices: [F("nivi","Nivi"),F("bengali","Bengali"),F("gujarati","Gujarati")] },
+  ],
+  lehenga: [
+    FABRIC_OPT("silk", [["silk","Silk"],["georgette","Georgette"],["velvet","Velvet"],["satin","Satin"],["net","Net"],["brocade","Brocade"],["organza","Organza"],["banarasi","Banarasi"]]),
+    { id: "border", label: "Zari Border", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("copper","Copper"),M("bronze","Antique"),M("rose-gold","Rose Gold")] },
+    { id: "flare", label: "Skirt Flare", default: "a-line", choices: [F("a-line","A-Line"),F("circular","Circular"),F("mermaid","Mermaid"),F("flared","Lehenga Flare")] },
+    { id: "work", label: "Hand Work", default: "embroidered", choices: [F("plain","Plain"),F("embroidered","Embroidered"),F("mirror","Mirror"),F("sequined","Sequined")] },
+    { id: "dupatta", label: "Dupatta", default: "yes", choices: [F("yes","With Dupatta"),F("no","No Dupatta")] },
+  ],
+  anarkali: [
+    FABRIC_OPT("georgette", [["georgette","Georgette"],["silk","Silk"],["chiffon","Chiffon"],["net","Net"],["satin","Satin"],["banarasi","Banarasi"],["velvet","Velvet"]]),
+    { id: "border", label: "Zari Border", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("copper","Copper"),M("rose-gold","Rose Gold")] },
+    { id: "sleeve", label: "Sleeve", default: "long", choices: [F("long","Full"),F("three-quarter","3/4"),F("short","Short"),F("sleeveless","Sleeveless")] },
+    { id: "length", label: "Length", default: "floor", choices: [F("floor","Floor"),F("ankle","Ankle"),F("knee","Knee Frock")] },
+    { id: "dupatta", label: "Dupatta", default: "yes", choices: [F("yes","With Dupatta"),F("no","No Dupatta")] },
+  ],
+  "salwar-kameez": [
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["silk","Silk"],["georgette","Georgette"],["chiffon","Chiffon"],["linen","Linen"],["satin","Satin"]]),
+    { id: "salwar", label: "Salwar Style", default: "patiala", choices: [F("patiala","Patiala"),F("straight","Straight"),F("churidar","Churidar"),F("palazzo","Palazzo")] },
+    { id: "border", label: "Trim", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("copper","Copper"),C("tonal","Tonal","#8a6d3b")] },
+    { id: "length", label: "Kameez Length", default: "regular", choices: [F("regular","Regular"),F("long","Long"),F("short","Short")] },
+    { id: "dupatta", label: "Dupatta", default: "yes", choices: [F("yes","With Dupatta"),F("no","No Dupatta")] },
+  ],
+  kurti: [
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["silk","Silk"],["linen","Linen"],["georgette","Georgette"],["chiffon","Chiffon"],["khadi","Khadi"],["velvet","Velvet"]]),
+    { id: "neck", label: "Neckline", default: "round", choices: [F("round","Round"),F("v","V-Neck"),F("boat","Boat"),F("keyhole","Keyhole")] },
+    { id: "sleeve", label: "Sleeve", default: "three-quarter", choices: [F("three-quarter","3/4"),F("full","Full"),F("short","Short"),F("sleeveless","Sleeveless")] },
+    { id: "length", label: "Length", default: "long", choices: [F("short","Short"),F("long","Long")] },
+    { id: "bottom", label: "Bottom", default: "leggings", choices: [F("leggings","Leggings"),F("palazzo","Palazzo"),F("none","Tunic Only")] },
+  ],
+  // Men
+  kurta: [
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["silk","Silk"],["linen","Linen"],["khadi","Khadi"],["velvet","Velvet"],["satin","Satin"],["banarasi","Banarasi"]]),
+    { id: "collar", label: "Collar", default: "mandarin", choices: [F("mandarin","Mandarin"),F("round","Round"),F("v-placket","V-Placket")] },
+    { id: "length", label: "Length", default: "regular", choices: [F("regular","Regular"),F("long","Long"),F("short","Short")] },
+    { id: "bottom", label: "Bottom", default: "churidar", choices: [F("churidar","Churidar"),F("pajama","Pajama"),F("none","Kurta Only")] },
+    { id: "button", label: "Buttons", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("bronze","Bronze"),C("accent","Accent")] },
+  ],
+  sherwani: [
+    FABRIC_OPT("silk", [["silk","Silk"],["velvet","Velvet"],["brocade","Brocade"],["banarasi","Banarasi"],["jacquard","Jacquard"],["satin","Satin"]]),
+    { id: "collar", label: "Collar", default: "bandhgala", choices: [F("bandhgala","Bandhgala"),F("mandarin","Mandarin"),F("round","Round")] },
+    { id: "work", label: "Embellishment", default: "embroidered", choices: [F("plain","Plain"),F("embroidered","Embroidered"),F("sequined","Sequined")] },
+    { id: "button", label: "Buttons", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("copper","Copper"),M("bronze","Bronze")] },
+    { id: "stole", label: "Stole / Dupatta", default: "yes", choices: [F("yes","With Stole"),F("no","No Stole")] },
+  ],
+  "nehru-jacket": [
+    FABRIC_OPT("silk", [["silk","Silk"],["cotton","Cotton"],["linen","Linen"],["velvet","Velvet"],["wool","Wool"],["jacquard","Jacquard"]]),
+    { id: "button", label: "Buttons", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("bronze","Bronze"),S("wood","Wood")] },
+    { id: "pocket", label: "Pockets", default: "welt", choices: [F("welt","Welt"),F("patch","Patch"),F("none","None")] },
+    { id: "inner", label: "Worn Over", default: "kurta", choices: [F("kurta","Kurta"),F("shirt","Shirt")] },
+  ],
+  pathani: [
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["linen","Linen"],["khadi","Khadi"],["silk","Silk"]]),
+    { id: "collar", label: "Collar", default: "band", choices: [F("band","Band"),F("round","Round")] },
+    { id: "length", label: "Length", default: "regular", choices: [F("regular","Regular"),F("long","Long")] },
+    { id: "pocket", label: "Pockets", default: "yes", choices: [F("yes","With Pockets"),F("no","None")] },
+    { id: "button", label: "Buttons", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),C("accent","Accent")] },
+  ],
+  dhoti: [
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["silk","Silk"],["khadi","Khadi"],["satin","Satin"]]),
+    { id: "border", label: "Zari Border", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("copper","Copper"),M("bronze","Maroon")] },
+    { id: "drape", label: "Drape Style", default: "veshti", choices: [F("veshti","Veshti"),F("panche","Panche"),F("pleated","Pleated")] },
+    { id: "length", label: "Length", default: "regular", choices: [F("regular","Regular"),F("long","Long")] },
   ],
 
   // ── FOOTWEAR ──

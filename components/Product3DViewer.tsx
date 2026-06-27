@@ -1692,13 +1692,313 @@ function Saree3D({ colors, pattern, options }: { colors: ProductColors; pattern:
   );
 }
 
+// ═════════════════════════════════════════════
+// TRADITIONAL WEAR — MEN
+// ═════════════════════════════════════════════
+
+// KURTA — long tunic + churidar/pajama, mandarin collar, button placket
+function Kurta3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.8, 0, 0.25, finishOf(o));
+  const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.72 }), [colors.secondary]);
+  const pj = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining), roughness: 0.86 }), [colors.lining]);
+  const btn = useMemo(() => metalMaterial(o.button === "accent" || !o.button ? undefined : o.button, colors.accent), [o.button, colors.accent]);
+  const collar = o.collar || "mandarin";
+  const length = o.length || "regular";
+  const bottom = o.bottom || "churidar";
+  const bodyH = length === "long" ? 4.6 : length === "short" ? 3.2 : 4.0;
+  const cy = 1.9 - bodyH / 2;
+  const hemY = cy - bodyH / 2;
+  const legW = bottom === "pajama" ? 0.82 : 0.6;
+  return (
+    <group>
+      {bottom !== "none" && [-0.6, 0.6].map((x, i) => (
+        <RoundedBox key={`l${i}`} args={[legW, 2.4, legW * 0.9]} radius={0.16} position={[x, -2.1, 0]} material={pj}/>
+      ))}
+      {bottom === "churidar" && [-0.6, 0.6].map((x, i) => (
+        [-2.85, -3.0, -3.15].map((y, j) => (
+          <Torus key={`g${i}-${j}`} args={[legW * 0.5, 0.05, 8, 18]} position={[x, y, 0]} rotation={[Math.PI/2,0,0]} material={pj}/>
+        ))
+      ))}
+      <RoundedBox args={[2.55, bodyH, 0.16]} radius={0.1} position={[0, cy, 0]} material={mat}/>
+      <RoundedBox args={[0.95, 2.5, 0.14]} radius={0.07} position={[-1.62, cy + 0.55, 0]} rotation={[0,0,0.18]} material={mat}/>
+      <RoundedBox args={[0.95, 2.5, 0.14]} radius={0.07} position={[1.62, cy + 0.55, 0]} rotation={[0,0,-0.18]} material={mat}/>
+      {collar === "mandarin" && <RoundedBox args={[0.95, 0.4, 0.22]} radius={0.08} position={[0,1.82,0.05]} material={dark}/>}
+      {collar === "round" && <Torus args={[0.5,0.1,12,32,Math.PI]} position={[0,1.78,0.04]} rotation={[0,0,Math.PI]} material={dark}/>}
+      {collar === "v-placket" && <>
+        <RoundedBox args={[0.12,0.8,0.18]} radius={0.04} position={[-0.22,1.5,0.05]} rotation={[0,0,-0.4]} material={dark}/>
+        <RoundedBox args={[0.12,0.8,0.18]} radius={0.04} position={[0.22,1.5,0.05]} rotation={[0,0,0.4]} material={dark}/>
+      </>}
+      <RoundedBox args={[0.16, 1.4, 0.18]} radius={0.04} position={[0, 1.0, 0.08]} material={dark}/>
+      {[1.5,1.15,0.8,0.45].map((y,i) => (
+        <mesh key={`b${i}`} position={[0,y,0.18]} rotation={[Math.PI/2,0,0]} material={btn}><cylinderGeometry args={[0.06,0.06,0.05,12]}/></mesh>
+      ))}
+      {[-1.2,1.2].map((x,i) => (
+        <RoundedBox key={`s${i}`} args={[0.04, bodyH*0.4, 0.18]} radius={0.02} position={[x, hemY + bodyH*0.2, 0.02]} material={dark}/>
+      ))}
+    </group>
+  );
+}
+
+// SHERWANI — long structured coat, bandhgala collar, full button row, embroidery, stole
+function Sherwani3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.55, 0, 0.45, finishOf(o));
+  const btn = useMemo(() => metalMaterial(o.button, colors.accent), [o.button, colors.accent]);
+  const work = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.accent), roughness: 0.3, metalness: 0.5, clearcoat: 0.6 }), [colors.accent]);
+  const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.7 }), [colors.secondary]);
+  const pj = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining), roughness: 0.86 }), [colors.lining]);
+  const collar = o.collar || "bandhgala";
+  const embellish = (o.work || "embroidered") !== "plain";
+  const stole = o.stole !== "no";
+  const bodyH = 5.0; const cy = 1.9 - bodyH / 2;
+  return (
+    <group>
+      {[-0.58, 0.58].map((x, i) => (<RoundedBox key={`l${i}`} args={[0.56, 2.2, 0.5]} radius={0.14} position={[x,-2.5,0]} material={pj}/>))}
+      <RoundedBox args={[2.5, bodyH, 0.2]} radius={0.1} position={[0,cy,0]} material={mat}/>
+      <RoundedBox args={[0.92, 2.7, 0.16]} radius={0.07} position={[-1.6, cy+0.7, 0]} rotation={[0,0,0.16]} material={mat}/>
+      <RoundedBox args={[0.92, 2.7, 0.16]} radius={0.07} position={[1.6, cy+0.7, 0]} rotation={[0,0,-0.16]} material={mat}/>
+      {collar !== "round"
+        ? <RoundedBox args={[1.0, 0.5, 0.24]} radius={0.08} position={[0,1.86,0.06]} material={dark}/>
+        : <Torus args={[0.5,0.1,12,32,Math.PI]} position={[0,1.8,0.04]} rotation={[0,0,Math.PI]} material={dark}/>}
+      <RoundedBox args={[0.2, bodyH-0.6, 0.22]} radius={0.05} position={[0, cy+0.1, 0.1]} material={embellish ? work : dark}/>
+      {Array.from({length:9},(_,i) => (
+        <mesh key={`b${i}`} position={[0, 1.5 - i*0.45, 0.22]} rotation={[Math.PI/2,0,0]} material={btn}><cylinderGeometry args={[0.07,0.07,0.05,12]}/></mesh>
+      ))}
+      {embellish && <>
+        <RoundedBox args={[2.5, 0.2, 0.22]} radius={0.05} position={[0, cy - bodyH/2 + 0.2, 0.02]} material={work}/>
+        <RoundedBox args={[0.14, bodyH-0.8, 0.2]} radius={0.04} position={[-1.18, cy, 0.04]} material={work}/>
+        <RoundedBox args={[0.14, bodyH-0.8, 0.2]} radius={0.04} position={[1.18, cy, 0.04]} material={work}/>
+      </>}
+      {stole && <RoundedBox args={[0.5, 4.2, 0.1]} radius={0.05} position={[1.5, 0.2, 0.16]} rotation={[0,0,0.12]} material={work}/>}
+    </group>
+  );
+}
+
+// NEHRU JACKET — sleeveless waistcoat over a kurta/shirt, mandarin collar
+function NehruJacket3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.65, 0, 0.35, finishOf(o));
+  const inner = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining), roughness: 0.8 }), [colors.lining]);
+  const btn = useMemo(() => metalMaterial(o.button, colors.accent), [o.button, colors.accent]);
+  const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.72 }), [colors.secondary]);
+  const pocket = o.pocket || "welt";
+  const innerStyle = o.inner || "kurta";
+  return (
+    <group>
+      <RoundedBox args={[2.5, 4.2, 0.12]} radius={0.1} position={[0,-0.2,-0.06]} material={inner}/>
+      {innerStyle === "shirt" && <>
+        <RoundedBox args={[0.6,0.5,0.12]} radius={0.06} position={[-0.3,1.78,0.0]} rotation={[0,0,-0.2]} material={inner}/>
+        <RoundedBox args={[0.6,0.5,0.12]} radius={0.06} position={[0.3,1.78,0.0]} rotation={[0,0,0.2]} material={inner}/>
+      </>}
+      <RoundedBox args={[2.7, 3.4, 0.16]} radius={0.1} position={[0,-0.1,0.02]} material={mat}/>
+      <RoundedBox args={[1.0, 0.42, 0.22]} radius={0.08} position={[0,1.78,0.08]} material={dark}/>
+      <RoundedBox args={[0.12, 3.2, 0.2]} radius={0.04} position={[0,-0.1,0.12]} material={dark}/>
+      {[1.2,0.75,0.3,-0.15,-0.6].map((y,i) => (
+        <mesh key={`b${i}`} position={[0,y,0.14]} rotation={[Math.PI/2,0,0]} material={btn}><cylinderGeometry args={[0.07,0.07,0.05,12]}/></mesh>
+      ))}
+      {pocket === "welt" && [-0.85,0.85].map((x,i) => (<RoundedBox key={`p${i}`} args={[0.8,0.16,0.06]} radius={0.04} position={[x,-1.0,0.12]} material={dark}/>))}
+      {pocket === "patch" && [-0.85,0.85].map((x,i) => (<RoundedBox key={`p${i}`} args={[0.78,0.7,0.06]} radius={0.06} position={[x,-1.0,0.12]} material={dark}/>))}
+    </group>
+  );
+}
+
+// PATHANI SUIT — loose long kurta + baggy salwar, band collar
+function Pathani3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.82, 0, 0.2, finishOf(o));
+  const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.78 }), [colors.secondary]);
+  const sal = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining || colors.main), roughness: 0.84 }), [colors.lining, colors.main]);
+  const btn = useMemo(() => metalMaterial(o.button === "accent" || !o.button ? undefined : o.button, colors.accent), [o.button, colors.accent]);
+  const collar = o.collar || "band";
+  const length = o.length || "regular";
+  const pocket = o.pocket !== "no";
+  const bodyH = length === "long" ? 4.6 : 4.0; const cy = 1.9 - bodyH / 2;
+  return (
+    <group>
+      {[-0.62,0.62].map((x,i) => (<RoundedBox key={`l${i}`} args={[1.0,2.4,0.9]} radius={0.3} position={[x,-2.3,0]} material={sal}/>))}
+      {[-0.62,0.62].map((x,i) => (<RoundedBox key={`c${i}`} args={[0.6,0.3,0.6]} radius={0.1} position={[x,-3.4,0]} material={sal}/>))}
+      <RoundedBox args={[2.9, bodyH, 0.18]} radius={0.12} position={[0,cy,0]} material={mat}/>
+      <RoundedBox args={[1.05, 2.6, 0.16]} radius={0.08} position={[-1.78, cy+0.6, 0]} rotation={[0,0,0.2]} material={mat}/>
+      <RoundedBox args={[1.05, 2.6, 0.16]} radius={0.08} position={[1.78, cy+0.6, 0]} rotation={[0,0,-0.2]} material={mat}/>
+      {collar === "band"
+        ? <RoundedBox args={[1.0,0.42,0.24]} radius={0.08} position={[0,1.84,0.06]} material={dark}/>
+        : <Torus args={[0.5,0.1,12,32,Math.PI]} position={[0,1.8,0.04]} rotation={[0,0,Math.PI]} material={dark}/>}
+      <RoundedBox args={[0.16,1.5,0.2]} radius={0.04} position={[0,1.0,0.1]} material={dark}/>
+      {[1.5,1.1,0.7].map((y,i) => (<mesh key={`b${i}`} position={[0,y,0.2]} rotation={[Math.PI/2,0,0]} material={btn}><cylinderGeometry args={[0.06,0.06,0.05,12]}/></mesh>))}
+      {pocket && [-0.95,0.95].map((x,i) => (<RoundedBox key={`p${i}`} args={[0.7,0.7,0.06]} radius={0.06} position={[x, cy-0.6, 0.1]} material={dark}/>))}
+    </group>
+  );
+}
+
+// DHOTI — draped lower wrap with pleated front fan + zari border
+function Dhoti3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.78, 0, 0.15, finishOf(o));
+  const border = useMemo(() => metalMaterial(o.border, colors.accent), [o.border, colors.accent]);
+  const drape = o.drape || "veshti";
+  const length = o.length || "regular";
+  const legH = length === "long" ? 3.0 : 2.4;
+  const legCy = 0.6 - legH / 2;
+  return (
+    <group position={[0,0.4,0]}>
+      <Cylinder args={[1.25,1.3,0.9,32]} position={[0,1.0,0]} material={mat}/>
+      <Torus args={[1.28,0.08,12,40]} position={[0,1.42,0]} rotation={[Math.PI/2,0,0]} material={border}/>
+      {[-0.62,0.62].map((x,i) => (<RoundedBox key={`l${i}`} args={[1.05, legH, 0.95]} radius={0.2} position={[x, legCy, 0]} material={mat}/>))}
+      {[-0.62,0.62].map((x,i) => (<RoundedBox key={`b${i}`} args={[1.1,0.16,1.0]} radius={0.05} position={[x, legCy - legH/2 + 0.08, 0]} material={border}/>))}
+      {drape !== "panche" && [-0.18,0,0.18].map((x,i) => (<RoundedBox key={`p${i}`} args={[0.12, legH*0.9, 0.3]} radius={0.04} position={[x, legCy + 0.1, 0.55]} material={mat}/>))}
+      {drape === "panche" && <RoundedBox args={[0.5, legH*0.8, 0.3]} radius={0.06} position={[1.0, legCy, 0.45]} rotation={[0,0,0.1]} material={mat}/>}
+    </group>
+  );
+}
+
+// ═════════════════════════════════════════════
+// TRADITIONAL WEAR — WOMEN
+// ═════════════════════════════════════════════
+
+// LEHENGA — choli + flared skirt cone + dupatta + zari hem
+function Lehenga3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.5, 0, 0.4, finishOf(o));
+  const choliMat = useMat({ ...colors, main: colors.secondary }, pattern, 0.55, 0, 0.3, finishOf(o));
+  const border = useMemo(() => metalMaterial(o.border, colors.accent), [o.border, colors.accent]);
+  const work = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.accent), roughness: 0.3, metalness: 0.55, clearcoat: 0.6 }), [colors.accent]);
+  const flare = o.flare || "a-line";
+  const dup = o.dupatta !== "no";
+  const embellish = (o.work || "embroidered") !== "plain";
+  const botR = flare === "circular" ? 2.7 : flare === "mermaid" ? 1.7 : flare === "flared" ? 2.9 : 2.3;
+  const topR = flare === "mermaid" ? 0.7 : 0.85;
+  const skirtH = 4.0;
+  return (
+    <group>
+      <RoundedBox args={[2.3, 1.0, 0.5]} radius={0.25} position={[0,1.7,0]} material={choliMat}/>
+      <RoundedBox args={[0.7,0.5,0.4]} radius={0.18} position={[-1.35,1.85,0]} rotation={[0,0,0.3]} material={choliMat}/>
+      <RoundedBox args={[0.7,0.5,0.4]} radius={0.18} position={[1.35,1.85,0]} rotation={[0,0,-0.3]} material={choliMat}/>
+      <Torus args={[0.42,0.08,12,28,Math.PI]} position={[0,1.95,0.22]} rotation={[0,0,Math.PI]} material={border}/>
+      <Cylinder args={[topR, botR, skirtH, 48]} position={[0,-1.0,0]} material={mat}/>
+      <Cylinder args={[botR+0.02, botR+0.05, 0.3, 48]} position={[0,-2.85,0]} material={border}/>
+      <Cylinder args={[topR+0.04, topR+0.04, 0.22, 40]} position={[0,1.0,0]} material={border}/>
+      {embellish && Array.from({length:16},(_,i) => { const a = i/16*Math.PI*2; return (
+        <mesh key={`w${i}`} position={[Math.sin(a)*(botR+0.04), -2.7, Math.cos(a)*(botR+0.04)]} material={work}><sphereGeometry args={[0.1,12,12]}/></mesh>
+      );})}
+      {dup && <RoundedBox args={[0.6,3.4,0.08]} radius={0.06} position={[-1.45,0.4,0.3]} rotation={[0,0,0.16]} material={mat}/>}
+      {dup && <RoundedBox args={[0.62,0.2,0.09]} radius={0.04} position={[-1.45,-1.25,0.3]} material={border}/>}
+    </group>
+  );
+}
+
+// ANARKALI — fitted bodice flaring into a floor-length gown
+function Anarkali3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.5, 0, 0.35, finishOf(o));
+  const border = useMemo(() => metalMaterial(o.border, colors.accent), [o.border, colors.accent]);
+  const yoke = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.accent), roughness: 0.3, metalness: 0.5, clearcoat: 0.6 }), [colors.accent]);
+  const sleeve = o.sleeve || "long";
+  const length = o.length || "floor";
+  const dup = o.dupatta !== "no";
+  const skirtH = length === "floor" ? 4.2 : length === "ankle" ? 3.6 : 2.6;
+  const botR = length === "knee" ? 1.8 : 2.4;
+  return (
+    <group>
+      <RoundedBox args={[2.0, 1.4, 0.6]} radius={0.2} position={[0,1.4,0]} material={mat}/>
+      <RoundedBox args={[1.4, 0.5, 0.62]} radius={0.12} position={[0,1.95,0]} material={yoke}/>
+      <Torus args={[0.4,0.07,12,28,Math.PI]} position={[0,2.0,0.3]} rotation={[0,0,Math.PI]} material={yoke}/>
+      <Cylinder args={[0.95, botR, skirtH, 48]} position={[0, 1.0 - skirtH/2, 0]} material={mat}/>
+      <Cylinder args={[botR+0.02, botR+0.05, 0.28, 48]} position={[0, 1.0 - skirtH + 0.14, 0]} material={border}/>
+      <Cylinder args={[0.98,0.98,0.18,40]} position={[0,1.0,0]} material={border}/>
+      {sleeve !== "sleeveless" && (() => { const sh = sleeve === "long" ? 2.6 : sleeve === "three-quarter" ? 1.9 : 1.0; const sy = 1.9 - sh/2; return (<>
+        <RoundedBox args={[0.6, sh, 0.5]} radius={0.18} position={[-1.2, sy, 0]} rotation={[0,0,0.12]} material={mat}/>
+        <RoundedBox args={[0.6, sh, 0.5]} radius={0.18} position={[1.2, sy, 0]} rotation={[0,0,-0.12]} material={mat}/>
+      </>); })()}
+      {dup && <RoundedBox args={[0.7,3.6,0.08]} radius={0.06} position={[1.5,0.3,0.3]} rotation={[0,0,-0.14]} material={mat}/>}
+      {dup && <RoundedBox args={[0.72,0.2,0.09]} radius={0.04} position={[1.5,-1.4,0.3]} material={border}/>}
+    </group>
+  );
+}
+
+// SALWAR KAMEEZ — kameez tunic + salwar (patiala/straight/churidar/palazzo) + dupatta
+function SalwarKameez3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.7, 0, 0.25, finishOf(o));
+  const border = useMemo(() => o.border === "tonal"
+    ? new THREE.MeshStandardMaterial({ color: new THREE.Color("#8a6d3b"), roughness: 0.6 })
+    : metalMaterial(o.border, colors.accent), [o.border, colors.accent]);
+  const salMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining || colors.secondary), roughness: 0.82 }), [colors.lining, colors.secondary]);
+  const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.74 }), [colors.secondary]);
+  const salwar = o.salwar || "patiala";
+  const length = o.length || "regular";
+  const dup = o.dupatta !== "no";
+  const bodyH = length === "long" ? 4.4 : length === "short" ? 3.0 : 3.8; const cy = 1.8 - bodyH / 2;
+  const baggy = salwar === "patiala" || salwar === "palazzo";
+  const legW = salwar === "palazzo" ? 1.2 : baggy ? 1.0 : salwar === "churidar" ? 0.55 : 0.78;
+  return (
+    <group>
+      {[-0.62,0.62].map((x,i) => (<RoundedBox key={`l${i}`} args={[legW, 2.6, legW*0.9]} radius={baggy ? 0.35 : 0.18} position={[x,-2.4,0]} material={salMat}/>))}
+      {salwar !== "palazzo" && [-0.62,0.62].map((x,i) => (<RoundedBox key={`c${i}`} args={[salwar === "churidar" ? 0.5 : 0.62, 0.3, 0.55]} radius={0.1} position={[x,-3.55,0]} material={salMat}/>))}
+      <RoundedBox args={[2.5, bodyH, 0.16]} radius={0.1} position={[0,cy,0]} material={mat}/>
+      <RoundedBox args={[0.85, 1.9, 0.14]} radius={0.07} position={[-1.55, cy+1.0, 0]} rotation={[0,0,0.2]} material={mat}/>
+      <RoundedBox args={[0.85, 1.9, 0.14]} radius={0.07} position={[1.55, cy+1.0, 0]} rotation={[0,0,-0.2]} material={mat}/>
+      <Torus args={[0.42,0.08,12,28,Math.PI]} position={[0,1.7,0.06]} rotation={[0,0,Math.PI]} material={border}/>
+      <RoundedBox args={[2.5, 0.14, 0.18]} radius={0.05} position={[0, cy - bodyH/2 + 0.07, 0.02]} material={border}/>
+      {[-1.18,1.18].map((x,i) => (<RoundedBox key={`s${i}`} args={[0.04, bodyH*0.35, 0.18]} radius={0.02} position={[x, cy - bodyH*0.28, 0.02]} material={dark}/>))}
+      {dup && <>
+        <Torus args={[1.15,0.18,16,40,Math.PI*1.3]} position={[0,0.9,0.1]} rotation={[0.3,0,0]} material={mat}/>
+        <RoundedBox args={[0.6,2.2,0.08]} radius={0.06} position={[-1.2,-0.3,0.2]} rotation={[0,0,0.1]} material={mat}/>
+      </>}
+    </group>
+  );
+}
+
+// KURTI — short tunic + leggings/palazzo, neckline & sleeve variations
+function Kurti3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.74, 0, 0.25, finishOf(o));
+  const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.74 }), [colors.secondary]);
+  const acc = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.accent), roughness: 0.5 }), [colors.accent]);
+  const legMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining || colors.secondary), roughness: 0.84 }), [colors.lining, colors.secondary]);
+  const neck = o.neck || "round";
+  const sleeve = o.sleeve || "three-quarter";
+  const length = o.length || "long";
+  const bottom = o.bottom || "leggings";
+  const bodyH = length === "long" ? 3.6 : 2.8; const cy = 1.7 - bodyH / 2;
+  const shoulderY = cy + bodyH/2 - 0.3;
+  return (
+    <group>
+      {bottom !== "none" && [-0.55,0.55].map((x,i) => (
+        <RoundedBox key={`l${i}`} args={[bottom === "palazzo" ? 1.05 : 0.58, 2.4, bottom === "palazzo" ? 0.95 : 0.55]} radius={bottom === "palazzo" ? 0.3 : 0.16} position={[x,-2.3,0]} material={legMat}/>
+      ))}
+      <RoundedBox args={[2.4, bodyH, 0.15]} radius={0.1} position={[0,cy,0]} material={mat}/>
+      {sleeve !== "sleeveless" && (() => { const sh = sleeve === "full" ? 2.4 : sleeve === "three-quarter" ? 1.7 : 0.9; const sy = shoulderY - sh/2 + 0.2; return (<>
+        <RoundedBox args={[0.82, sh, 0.13]} radius={0.07} position={[-1.5, sy, 0]} rotation={[0,0,0.2]} material={mat}/>
+        <RoundedBox args={[0.82, sh, 0.13]} radius={0.07} position={[1.5, sy, 0]} rotation={[0,0,-0.2]} material={mat}/>
+      </>); })()}
+      {neck === "round" && <Torus args={[0.42,0.08,12,28,Math.PI]} position={[0,1.62,0.06]} rotation={[0,0,Math.PI]} material={dark}/>}
+      {neck === "boat" && <RoundedBox args={[1.3,0.1,0.16]} radius={0.04} position={[0,1.66,0.05]} material={dark}/>}
+      {neck === "v" && <>
+        <RoundedBox args={[0.1,0.7,0.16]} radius={0.04} position={[-0.2,1.4,0.05]} rotation={[0,0,-0.4]} material={dark}/>
+        <RoundedBox args={[0.1,0.7,0.16]} radius={0.04} position={[0.2,1.4,0.05]} rotation={[0,0,0.4]} material={dark}/>
+      </>}
+      {neck === "keyhole" && <>
+        <Torus args={[0.38,0.07,12,28,Math.PI]} position={[0,1.6,0.06]} rotation={[0,0,Math.PI]} material={dark}/>
+        <mesh position={[0,1.3,0.06]} material={acc}><sphereGeometry args={[0.12,12,12]}/></mesh>
+      </>}
+      <RoundedBox args={[2.4, 0.12, 0.16]} radius={0.04} position={[0, cy - bodyH/2 + 0.06, 0.02]} material={acc}/>
+      {[-1.13,1.13].map((x,i) => (<RoundedBox key={`s${i}`} args={[0.04, bodyH*0.3, 0.16]} radius={0.02} position={[x, cy - bodyH*0.3, 0.02]} material={dark}/>))}
+    </group>
+  );
+}
+
 // ─────────────────────────────────────────────
 // MODEL MAP
 // ─────────────────────────────────────────────
 const MODEL_MAP: Record<string, React.FC<{ colors: ProductColors; pattern: string; options?: Opts }>> = {
   "tshirt": TShirt3D, "shirt": Shirt3D, "polo": Polo3D,
   "hoodie": Hoodie3D, "jacket": Jacket3D, "bomber": Bomber3D,
-  "shorts": Shorts3D, "joggers": Joggers3D, "jeans": Jeans3D, "saree": Saree3D,
+  "shorts": Shorts3D, "joggers": Joggers3D, "jeans": Jeans3D,
+  "saree": Saree3D, "lehenga": Lehenga3D, "anarkali": Anarkali3D,
+  "salwar-kameez": SalwarKameez3D, "kurti": Kurti3D,
+  "kurta": Kurta3D, "sherwani": Sherwani3D, "nehru-jacket": NehruJacket3D,
+  "pathani": Pathani3D, "dhoti": Dhoti3D,
   "sneaker-low": SneakerLow3D, "sneaker-high": SneakerHigh3D,
   "boot": Boot3D, "sandal": Sandal3D, "slip-on": SlipOn3D,
   "cap": Cap3D, "beanie": Beanie3D, "bucket-hat": BucketHat3D,

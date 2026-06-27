@@ -10,7 +10,9 @@ export interface ProductColors {
 
 export type ProductType =
   | "tshirt" | "shirt" | "polo" | "hoodie" | "jacket" | "bomber"
-  | "shorts" | "joggers" | "jeans" | "saree"
+  | "shorts" | "joggers" | "jeans"
+  | "saree" | "lehenga" | "anarkali" | "salwar-kameez" | "kurti"
+  | "kurta" | "sherwani" | "nehru-jacket" | "pathani" | "dhoti"
   | "sneaker-low" | "sneaker-high" | "boot" | "sandal" | "slip-on"
   | "cap" | "beanie" | "bucket-hat"
   | "backpack" | "tote"
@@ -52,6 +54,16 @@ const products: Record<ProductType, React.ComponentType<{colors: ProductColors; 
   "joggers":      dynamic(() => import("./products/Joggers")),
   "jeans":        dynamic(() => import("./products/Jeans")),
   "saree":        dynamic(() => import("./products/Saree")),
+  // Traditional wear — 3D only, show prompt in 2D view
+  "lehenga": () => <AccessoryPrompt label="Lehenga"/>,
+  "anarkali": () => <AccessoryPrompt label="Anarkali Suit"/>,
+  "salwar-kameez": () => <AccessoryPrompt label="Salwar Kameez"/>,
+  "kurti": () => <AccessoryPrompt label="Kurti"/>,
+  "kurta": () => <AccessoryPrompt label="Kurta"/>,
+  "sherwani": () => <AccessoryPrompt label="Sherwani"/>,
+  "nehru-jacket": () => <AccessoryPrompt label="Nehru Jacket"/>,
+  "pathani": () => <AccessoryPrompt label="Pathani Suit"/>,
+  "dhoti": () => <AccessoryPrompt label="Dhoti"/>,
   "sneaker-low":  dynamic(() => import("./products/SneakerLow")),
   "sneaker-high": dynamic(() => import("./products/SneakerHigh")),
   "boot":         dynamic(() => import("./products/Boot")),
