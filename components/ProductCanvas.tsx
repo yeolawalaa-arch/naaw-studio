@@ -29,6 +29,15 @@ export interface TextOverlay {
   _onDrag?: (x: number, y: number) => void;
 }
 
+export interface PrintImage {
+  src: string;
+  x: number;       // centre X, 0-100 %
+  y: number;       // centre Y, 0-100 %
+  scale: number;   // width as % of canvas
+  opacity: number; // 0-100
+  _onDrag?: (x: number, y: number) => void;
+}
+
 import dynamic from "next/dynamic";
 import React, { useRef, useState } from "react";
 
@@ -78,26 +87,28 @@ function AccessoryPrompt({ label }: { label: string }) {
   );
 }
 
-export default function ProductCanvas({ productType, colors, pattern, textOverlay, patternIntensity, patternZone }: {
+export default function ProductCanvas({ productType, colors, pattern, textOverlay, printImage, patternIntensity, patternZone }: {
   productType: ProductType;
   colors: ProductColors;
   pattern: string;
   textOverlay?: TextOverlay;
+  printImage?: PrintImage;
   patternIntensity?: number;
   patternZone?: string;
 }) {
   const Component = products[productType];
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState(false);
+  const [dragTarget, setDragTarget] = useState<null | "text" | "image">(null);
 
   if (!Component) return null;
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!dragging || !textOverlay || !wrapperRef.current) return;
+    if (!dragTarget || !wrapperRef.current) return;
     const rect = wrapperRef.current.getBoundingClientRect();
-    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
-    textOverlay._onDrag?.(Math.max(0, Math.min(100, x)), Math.max(0, Math.min(100, y)));
+    const x = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+    const y = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 100)));
+    if (dragTarget === "text") textOverlay?._onDrag?.(x, y);
+    else if (dragTarget === "image") printImage?._onDrag?.(x, y);
   };
 
   return (
@@ -105,10 +116,32 @@ export default function ProductCanvas({ productType, colors, pattern, textOverla
       ref={wrapperRef}
       className="relative w-full select-none"
       onMouseMove={handleMouseMove}
-      onMouseUp={() => setDragging(false)}
-      onMouseLeave={() => setDragging(false)}
+      onMouseUp={() => setDragTarget(null)}
+      onMouseLeave={() => setDragTarget(null)}
     >
       <Component colors={colors} pattern={pattern} patternIntensity={patternIntensity} patternZone={patternZone} />
+      {printImage?.src && (
+        <div className="absolute inset-0 pointer-events-none" style={{ userSelect: "none" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={printImage.src}
+            alt="custom print"
+            draggable={false}
+            className="absolute cursor-move pointer-events-auto"
+            style={{
+              left: `${printImage.x}%`,
+              top: `${printImage.y}%`,
+              width: `${printImage.scale}%`,
+              transform: "translate(-50%, -50%)",
+              opacity: printImage.opacity / 100,
+              userSelect: "none",
+              filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+            }}
+            onMouseDown={() => setDragTarget("image")}
+            title="Drag to move"
+          />
+        </div>
+      )}
       {textOverlay?.text && (
         <div
           className="absolute inset-0 pointer-events-none"
@@ -130,7 +163,7 @@ export default function ProductCanvas({ productType, colors, pattern, textOverla
               textShadow: "0 1px 4px rgba(0,0,0,0.4)",
               whiteSpace: "nowrap",
             }}
-            onMouseDown={() => setDragging(true)}
+            onMouseDown={() => setDragTarget("text")}
             title="Drag to move"
           >
             {textOverlay.text}

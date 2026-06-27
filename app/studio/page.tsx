@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ProductType, ProductColors, TextOverlay } from "../../components/ProductCanvas";
+import { PRODUCT_OPTIONS, defaultOptions, sanitizeOptions, PRINTABLE } from "../../lib/productOptions";
 
 const ProductCanvas = dynamic(() => import("../../components/ProductCanvas"), { ssr: false });
 const Product3DViewer = dynamic(() => import("../../components/Product3DViewer"), { ssr: false });
@@ -227,6 +228,11 @@ export default function StudioPage() {
     text: "", color: "#ffffff", size: 28, x: 50, y: 50,
     font: "Arial", bold: true, italic: false, opacity: 90,
   });
+  const [options, setOptions] = useState<Record<string, string>>(() => defaultOptions("tshirt"));
+  const [printImage, setPrintImage] = useState<{ src: string; x: number; y: number; scale: number; opacity: number } | null>(null);
+
+  const productLabel = PRODUCTS.find(p => p.type === product)?.label ?? "";
+  const canPrint = PRINTABLE.has(product);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -256,6 +262,9 @@ export default function StudioPage() {
         setColors({ ...DEFAULT_COLORS, ...data.colors });
         if (data.patternSuggestion) setPattern(data.patternSuggestion);
       }
+      if (data.options) {
+        setOptions(sanitizeOptions(product, data.options));
+      }
       setAiResult(data.description || "Design applied!");
     } catch {
       setAiResult("Could not connect to AI. Try manually.");
@@ -277,6 +286,19 @@ export default function StudioPage() {
   const handleProductSelect = (type: ProductType) => {
     if (!isPro && !FREE_PRODUCTS.includes(type)) { setShowUpgrade(true); return; }
     setProduct(type);
+    setOptions(defaultOptions(type));
+  };
+
+  const handlePrintUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isPro) { setShowUpgrade(true); return; }
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setAiResult("Please choose an image file."); return; }
+    if (file.size > 4 * 1024 * 1024) { setAiResult("Image too large — keep it under 4MB."); return; }
+    const reader = new FileReader();
+    reader.onload = () => setPrintImage({ src: reader.result as string, x: 50, y: 45, scale: 40, opacity: 100 });
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   return (
@@ -326,6 +348,35 @@ export default function StudioPage() {
               })}
             </div>
           </div>
+
+          {/* Product Options — unique per product */}
+          {(PRODUCT_OPTIONS[product]?.length ?? 0) > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <p className="text-[10px] text-white/40 uppercase tracking-widest">{productLabel} Options</p>
+                <span className="text-[9px] text-white/25">✦ best in 3D</span>
+              </div>
+              <div className="space-y-3">
+                {PRODUCT_OPTIONS[product].map(opt => (
+                  <div key={opt.id}>
+                    <p className="text-[10px] text-white/50 mb-1.5">{opt.label}</p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {opt.choices.map(c => {
+                        const active = (options[opt.id] ?? opt.default) === c.id;
+                        return (
+                          <button key={c.id} onClick={() => setOptions(prev => ({ ...prev, [opt.id]: c.id }))}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-semibold transition flex items-center gap-1.5 ${active ? "bg-white text-black" : "bg-white/8 border border-white/10 text-white/60 hover:bg-white/15"}`}>
+                            {c.swatch && <span className="w-2.5 h-2.5 rounded-full border border-white/25 flex-shrink-0" style={{ background: c.swatch }} />}
+                            {c.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* AI Prompt */}
           <div>
@@ -502,6 +553,53 @@ export default function StudioPage() {
             )}
           </div>
 
+          {/* Custom Print / Graphic — printable products only */}
+          {canPrint && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <p className="text-[10px] text-white/40 uppercase tracking-widest">Custom Print / Graphic</p>
+                {!isPro && <ProBadge onClick={() => setShowUpgrade(true)} />}
+              </div>
+              {!isPro ? (
+                <button onClick={() => setShowUpgrade(true)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs text-white/40 hover:bg-white/10 transition text-center">
+                  🔒 Upgrade to Pro to print your own graphic
+                </button>
+              ) : !printImage ? (
+                <label className="block w-full bg-white/8 border border-dashed border-white/20 rounded-xl px-3 py-4 text-xs text-white/50 hover:bg-white/12 transition text-center cursor-pointer">
+                  ⬆ Upload image to print (PNG/JPG · max 4MB)
+                  <input type="file" accept="image/*" onChange={handlePrintUpload} className="hidden" />
+                </label>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={printImage.src} alt="print preview" className="w-10 h-10 rounded-lg object-cover border border-white/20" />
+                    <span className="text-[10px] text-white/40 flex-1 leading-tight">Drag the graphic on the preview to position it</span>
+                    <button onClick={() => setPrintImage(null)}
+                      className="px-2 py-1 rounded-lg text-[10px] font-semibold bg-white/10 text-white/60 hover:bg-red-500/30 hover:text-white transition">Remove</button>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { label: "Size", key: "scale" as const, min: 10, max: 90 },
+                      { label: "Left ↔", key: "x" as const, min: 5, max: 95 },
+                      { label: "Up ↕", key: "y" as const, min: 5, max: 95 },
+                      { label: "Opacity", key: "opacity" as const, min: 10, max: 100 },
+                    ].map(({ label, key, min, max }) => (
+                      <div key={key} className="flex items-center gap-2">
+                        <span className="text-[10px] text-white/40 w-12">{label}</span>
+                        <input type="range" min={min} max={max} value={printImage[key]}
+                          onChange={e => setPrintImage(prev => prev ? { ...prev, [key]: Number(e.target.value) } : prev)}
+                          className="flex-1 accent-white" />
+                        <span className="text-[10px] text-white/40 w-9 text-right">{printImage[key]}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Export */}
           <div>
             <button onClick={handleExport}
@@ -528,14 +626,17 @@ export default function StudioPage() {
           <div className="flex-1 flex items-center justify-center p-6">
             {view3D ? (
               <div className="w-full max-w-xl" style={{ height: "480px" }}>
-                <Product3DViewer productType={product} colors={colors} pattern={pattern}/>
+                <Product3DViewer productType={product} colors={colors} pattern={pattern} options={options}/>
                 <p className="text-center text-white/25 text-[10px] mt-2">Drag to rotate · Scroll to zoom</p>
               </div>
             ) : (
               <div id="product-canvas" className="w-full max-w-xl">
                 <ProductCanvas productType={product} colors={colors} pattern={pattern}
                   patternIntensity={patternIntensity} patternZone={patternZone}
-                  textOverlay={isPro ? textOverlay : undefined} />
+                  textOverlay={isPro ? textOverlay : undefined}
+                  printImage={isPro && printImage && canPrint
+                    ? { ...printImage, _onDrag: (x, y) => setPrintImage(prev => prev ? { ...prev, x, y } : prev) }
+                    : undefined} />
               </div>
             )}
           </div>
