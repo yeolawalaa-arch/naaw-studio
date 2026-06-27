@@ -438,7 +438,65 @@ function RotatingModel({ children }: { children: React.ReactNode }) {
 }
 
 // ─────────────────────────────────────────────
-// SNEAKER LOW — proper shoe shape via ExtrudeGeometry
+// CHUNKY SOLE UNIT — thick stacked midsole + treaded outsole + bulbous toe bumper.
+// Shared by the low & high sneakers so both sit on a real, chunky platform.
+// ─────────────────────────────────────────────
+function ChunkySole({ soleMat, outsoleMat, toe, toeMat, depth = 2.04 }: {
+  soleMat: THREE.Material; outsoleMat: THREE.Material; toe: string; toeMat: THREE.Material; depth?: number;
+}) {
+  // Thick foam midsole — tall band, bulging out past the toe and heel (dad-shoe look).
+  const midsoleShape = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(-2.5, 0.36);
+    s.bezierCurveTo(-2.96, 0.4, -3.06, 0.72, -2.96, 1.02);   // bulbous toe front
+    s.bezierCurveTo(-2.88, 1.2, -2.5, 1.27, -2.0, 1.25);     // toe top
+    s.lineTo(2.05, 1.23);
+    s.bezierCurveTo(2.6, 1.25, 3.0, 1.14, 3.06, 0.86);       // heel bulge
+    s.bezierCurveTo(3.1, 0.6, 3.0, 0.42, 2.62, 0.38);        // heel down
+    s.lineTo(-2.5, 0.36);
+    return s;
+  }, []);
+  // Outsole slab — the ground-contact layer, slightly up-turned at the toe.
+  const outsoleShape = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(-2.54, 0.08);
+    s.bezierCurveTo(-2.92, 0.1, -3.0, 0.26, -2.94, 0.44);
+    s.lineTo(2.66, 0.44);
+    s.bezierCurveTo(2.92, 0.44, 3.0, 0.26, 2.92, 0.06);
+    s.bezierCurveTo(2.62, -0.04, -2.22, -0.04, -2.54, 0.08);
+    return s;
+  }, []);
+  const midGeo = useMemo(() => new THREE.ExtrudeGeometry(midsoleShape, {
+    depth, bevelEnabled: true, bevelThickness: 0.26, bevelSize: 0.34, bevelSegments: 8,
+  }), [midsoleShape, depth]);
+  const outGeo = useMemo(() => new THREE.ExtrudeGeometry(outsoleShape, {
+    depth: depth + 0.14, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.14, bevelSegments: 5,
+  }), [outsoleShape, depth]);
+  const cxMid = -depth / 2;
+  const cxOut = -(depth + 0.14) / 2;
+  // Tread lugs under the toe and heel (skip the arch so it reads like a real outsole).
+  const lugX = [-2.05, -1.65, -1.25, -0.85, 0.95, 1.35, 1.75, 2.15];
+  return (
+    <group>
+      {/* Outsole + tread */}
+      <mesh geometry={outGeo} material={outsoleMat} position={[0, 0, cxOut]} castShadow receiveShadow/>
+      {lugX.map((x, i) => (
+        <mesh key={`lug-${i}`} position={[x, -0.06, cxOut]} material={outsoleMat} castShadow>
+          <boxGeometry args={[0.2, 0.22, depth - 0.08]}/>
+        </mesh>
+      ))}
+      {/* Thick foam midsole */}
+      <mesh geometry={midGeo} material={soleMat} position={[0, 0, cxMid]} castShadow receiveShadow/>
+      {/* Rubber toe bumper wraps the chunky front */}
+      {toe === "cap" && (
+        <RoundedBox args={[0.6, 1.02, depth + 0.06]} radius={0.28} position={[-2.5, 0.95, cxMid]} material={toeMat} castShadow/>
+      )}
+    </group>
+  );
+}
+
+// ─────────────────────────────────────────────
+// SNEAKER LOW — chunky platform + low-top upper
 // ─────────────────────────────────────────────
 function SneakerLow3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
   const o = options || {};
@@ -452,12 +510,15 @@ function SneakerLow3D({ colors, pattern, options }: { colors: ProductColors; pat
   const upperMat = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: 0xF6F6F6, roughness: fin.roughness, metalness: 0, clearcoat: fin.clearcoat, clearcoatRoughness: 0.08,
   }), [fin]);
+  const panelMat = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(colors.main), roughness: fin.roughness, clearcoat: fin.clearcoat * 0.8, clearcoatRoughness: 0.12,
+  }), [colors.main, fin]);
   const perfMat = useMemo(() => new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.9 }), []);
   const soleMat = useMemo(() => new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color(soleCol), roughness: 0.88, metalness: 0,
+    color: new THREE.Color(soleCol), roughness: 0.82, metalness: 0, clearcoat: 0.25,
   }), [soleCol]);
   const outsoleRubber = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color(soleCol).multiplyScalar(0.88), roughness: 0.95,
+    color: new THREE.Color(soleCol).multiplyScalar(0.78), roughness: 0.95,
   }), [soleCol]);
   const accentMat = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(colors.accent), roughness: 0.35, metalness: 0.05, clearcoat: 0.5,
@@ -467,93 +528,65 @@ function SneakerLow3D({ colors, pattern, options }: { colors: ProductColors; pat
     color: 0xF0F0F0, roughness: 0.35, clearcoat: 0.4,
   }), []);
 
-  // Shoe side profile — drawn in XY plane, extruded along Z
+  // Proven low-top upper profile (seated onto the chunky midsole via the lifted group)
   const shoeShape = useMemo(() => {
     const s = new THREE.Shape();
     s.moveTo(-2.15, 0.12);
-    // Toe front curve (vertical face of toe box)
     s.bezierCurveTo(-2.5, 0.12, -2.65, 0.35, -2.65, 0.62);
-    // Toe box top
     s.bezierCurveTo(-2.65, 1.0, -2.38, 1.18, -1.92, 1.22);
-    // Vamp — gently rises toward ankle
     s.bezierCurveTo(-0.7, 1.28, 0.65, 1.45, 1.38, 1.78);
-    // Ankle collar — peaks here
     s.bezierCurveTo(1.9, 2.05, 2.28, 2.02, 2.5, 1.8);
-    // Heel back
     s.bezierCurveTo(2.75, 1.52, 2.88, 1.18, 2.82, 0.85);
-    // Heel bottom
     s.bezierCurveTo(2.75, 0.5, 2.58, 0.16, 2.3, 0.04);
-    // Sole bottom (heel to toe)
     s.bezierCurveTo(1.6, -0.04, -1.4, -0.04, -1.95, 0.06);
     s.bezierCurveTo(-2.06, 0.09, -2.15, 0.12, -2.15, 0.12);
     return s;
   }, []);
-
-  // Flat outsole slightly taller than shoe base
-  const soleShape = useMemo(() => {
-    const s = new THREE.Shape();
-    s.moveTo(-2.35, 0);
-    s.bezierCurveTo(-2.7, 0, -2.78, 0.14, -2.78, 0.32);
-    s.bezierCurveTo(-2.78, 0.5, -2.6, 0.58, -2.3, 0.58);
-    s.lineTo(2.32, 0.58);
-    s.bezierCurveTo(2.65, 0.58, 2.78, 0.46, 2.78, 0.28);
-    s.bezierCurveTo(2.78, 0.1, 2.62, 0, 2.32, 0);
-    s.lineTo(-2.35, 0);
-    return s;
-  }, []);
-
   const shoeGeo = useMemo(() => new THREE.ExtrudeGeometry(shoeShape, {
-    depth: 1.65, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.22, bevelSegments: 8,
+    depth: 1.82, bevelEnabled: true, bevelThickness: 0.22, bevelSize: 0.26, bevelSegments: 8,
   }), [shoeShape]);
 
-  const soleGeo = useMemo(() => new THREE.ExtrudeGeometry(soleShape, {
-    depth: 1.65, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.1, bevelSegments: 4,
-  }), [soleShape]);
-
-  const cx = -0.82; // half of depth centered
+  const cx = -0.91;     // half of upper depth
+  const liftY = 0.82;   // raise the upper to sit on the chunky midsole
 
   return (
-    <group rotation={[0.1, -0.28, 0.04]} position={[0, -0.9, 0]}>
-      {/* Rubber outsole */}
-      <mesh geometry={soleGeo} material={outsoleRubber} position={[0, -0.04, cx]}/>
-      {/* White foam midsole strip */}
-      <mesh geometry={soleGeo} material={soleMat} position={[0, 0.28, cx]}/>
-      {/* Upper shoe body */}
-      <mesh geometry={shoeGeo} material={upperMat} position={[0, 0, cx]}/>
-      {/* Toe box — rubber cap / perforations / plain */}
-      {toe === "cap" && (
-        <RoundedBox args={[0.5, 0.92, 1.78]} radius={0.2} position={[-2.16, 0.6, cx]} material={outsoleRubber}/>
-      )}
-      {toe === "perf" && [0,1].flatMap(r => [0,1,2,3].map(c => (
-        <mesh key={`perf-${r}-${c}`} position={[-1.95 + r*0.32, 1.2 + r*0.04, cx - 0.55 + c*0.4]} material={perfMat}>
-          <cylinderGeometry args={[0.045, 0.045, 0.05, 10]}/>
-        </mesh>
-      )))}
-      {/* Tongue — flat panel at front opening */}
-      <RoundedBox args={[1.05, 1.15, 0.12]} radius={0.06} position={[-0.45, 1.35, 0.9]}
-        rotation={[-0.14, 0, 0]} material={tongueMat}/>
-      {/* Accent side swoosh / logo stripe */}
-      <RoundedBox args={[3.0, 0.18, 0.06]} radius={0.04}
-        position={[0.1, 0.88, 1.44]} rotation={[0, 0, 0.05]} material={accentMat}/>
-      {/* Laces */}
-      {showLaces && [-0.95,-0.5,-0.05,0.4,0.82].map((x,i) => (
-        <RoundedBox key={i} args={[0.13, 0.06, 1.28]} radius={0.03}
-          position={[x, 1.52+i*0.035, 0.84]} rotation={[-0.12,0,0]} material={laceMat}/>
-      ))}
-      {/* Heel tab accent */}
-      <RoundedBox args={[0.25, 0.68, 0.13]} radius={0.06} position={[2.6, 0.96, 0.1]} material={accentMat}/>
-      {/* Eyelet rings */}
-      {showLaces && [-0.95,-0.5,-0.05,0.4,0.82].map((x,i) => (
-        <mesh key={i} position={[x, 1.52+i*0.035, 1.44]} rotation={[Math.PI/2,0,0]} material={accentMat}>
-          <torusGeometry args={[0.09, 0.024, 6, 12]}/>
-        </mesh>
-      ))}
+    <group rotation={[0.08, -0.3, 0.03]} position={[0, -1.3, 0]} scale={0.92}>
+      <ChunkySole soleMat={soleMat} outsoleMat={outsoleRubber} toe={toe} toeMat={outsoleRubber} depth={2.04}/>
+      {/* Upper + detailing, lifted onto the platform */}
+      <group position={[0, liftY, 0]}>
+        <mesh geometry={shoeGeo} material={upperMat} position={[0, 0, cx]} castShadow/>
+        {/* Coloured side panel for a multi-panel upper */}
+        <RoundedBox args={[2.1, 0.72, 0.06]} radius={0.05} position={[0.35, 0.95, 1.46]} material={panelMat}/>
+        {/* Perforated toe (option) */}
+        {toe === "perf" && [0,1].flatMap(r => [0,1,2,3].map(c => (
+          <mesh key={`perf-${r}-${c}`} position={[-1.95 + r*0.32, 1.2 + r*0.04, 0.55 - c*0.4]} material={perfMat}>
+            <cylinderGeometry args={[0.045, 0.045, 0.05, 10]}/>
+          </mesh>
+        )))}
+        {/* Tongue at the front opening */}
+        <RoundedBox args={[1.05, 1.15, 0.12]} radius={0.06} position={[-0.45, 1.35, 0.96]} rotation={[-0.14, 0, 0]} material={tongueMat}/>
+        {/* Accent side swoosh / logo stripe */}
+        <RoundedBox args={[3.0, 0.2, 0.06]} radius={0.04} position={[0.1, 0.82, 1.5]} rotation={[0, 0, 0.05]} material={accentMat}/>
+        {/* Laces */}
+        {showLaces && [-0.95,-0.5,-0.05,0.4,0.82].map((x,i) => (
+          <RoundedBox key={`l-${i}`} args={[0.14, 0.06, 1.32]} radius={0.03} position={[x, 1.52+i*0.035, 0.9]} rotation={[-0.12,0,0]} material={laceMat}/>
+        ))}
+        {/* Eyelet rings */}
+        {showLaces && [-0.95,-0.5,-0.05,0.4,0.82].map((x,i) => (
+          <mesh key={`e-${i}`} position={[x, 1.52+i*0.035, 1.5]} rotation={[Math.PI/2,0,0]} material={accentMat}>
+            <torusGeometry args={[0.09, 0.024, 6, 12]}/>
+          </mesh>
+        ))}
+        {/* Heel tab + pull loop */}
+        <RoundedBox args={[0.26, 0.7, 0.14]} radius={0.06} position={[2.6, 0.95, 0.1]} material={accentMat}/>
+        <Torus args={[0.16, 0.05, 8, 16]} position={[2.8, 1.5, 0.1]} rotation={[Math.PI/2, 0, 0]} material={accentMat}/>
+      </group>
     </group>
   );
 }
 
 // ─────────────────────────────────────────────
-// SNEAKER HIGH — same profile, taller ankle collar
+// SNEAKER HIGH — chunky platform + tall hi-top collar
 // ─────────────────────────────────────────────
 function SneakerHigh3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
   const o = options || {};
@@ -561,17 +594,19 @@ function SneakerHigh3D({ colors, pattern, options }: { colors: ProductColors; pa
   const soleCol = SOLE_COLORS[o.sole || "white"] || "#F2F2F2";
   const laceId = o.lace || "white";
   const laceCol = laceId === "accent" ? colors.accent : (LACE_COLORS[laceId] || "#FFFFFF");
+  const showLaces = laceId !== "none";
   const toe = o.toe || "cap";
   const upperMat = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(colors.main), roughness: fin.roughness, metalness: 0, clearcoat: fin.clearcoat, clearcoatRoughness: 0.1,
   }), [colors.main, fin]);
   const perfMat = useMemo(() => new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.9 }), []);
-  const soleMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(soleCol), roughness: 0.88 }), [soleCol]);
-  const outsoleRubber = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(soleCol).multiplyScalar(0.86), roughness: 0.95 }), [soleCol]);
+  const soleMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(soleCol), roughness: 0.82, clearcoat: 0.25 }), [soleCol]);
+  const outsoleRubber = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(soleCol).multiplyScalar(0.76), roughness: 0.95 }), [soleCol]);
   const accentMat = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(colors.accent), roughness: 0.3, clearcoat: 0.6,
   }), [colors.accent]);
   const laceMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(laceCol), roughness: 0.92 }), [laceCol]);
+  const tongueMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.main).multiplyScalar(1.05), roughness: 0.4 }), [colors.main]);
 
   const highShoeShape = useMemo(() => {
     const s = new THREE.Shape();
@@ -590,46 +625,36 @@ function SneakerHigh3D({ colors, pattern, options }: { colors: ProductColors; pa
     s.bezierCurveTo(-2.06, 0.09, -2.15, 0.12, -2.15, 0.12);
     return s;
   }, []);
-
-  const soleShape = useMemo(() => {
-    const s = new THREE.Shape();
-    s.moveTo(-2.35, 0); s.bezierCurveTo(-2.75, 0, -2.82, 0.14, -2.82, 0.32);
-    s.bezierCurveTo(-2.82, 0.5, -2.62, 0.58, -2.32, 0.58); s.lineTo(2.45, 0.58);
-    s.bezierCurveTo(2.7, 0.58, 2.82, 0.44, 2.82, 0.28); s.bezierCurveTo(2.82, 0.1, 2.65, 0, 2.45, 0);
-    s.lineTo(-2.35, 0);
-    return s;
-  }, []);
-
   const shoeGeo = useMemo(() => new THREE.ExtrudeGeometry(highShoeShape, {
-    depth: 1.65, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.22, bevelSegments: 8,
+    depth: 1.82, bevelEnabled: true, bevelThickness: 0.22, bevelSize: 0.26, bevelSegments: 8,
   }), [highShoeShape]);
-  const soleGeo = useMemo(() => new THREE.ExtrudeGeometry(soleShape, {
-    depth: 1.65, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.1, bevelSegments: 4,
-  }), [soleShape]);
 
-  const cx = -0.82;
+  const cx = -0.91;
+  const liftY = 0.82;
   return (
-    <group rotation={[0.1, -0.28, 0.04]} position={[0, -1.2, 0]}>
-      <mesh geometry={soleGeo} material={outsoleRubber} position={[0, -0.04, cx]}/>
-      <mesh geometry={soleGeo} material={soleMat} position={[0, 0.28, cx]}/>
-      <mesh geometry={shoeGeo} material={upperMat} position={[0, 0, cx]}/>
-      {/* Toe box — rubber cap / perforations / plain */}
-      {toe === "cap" && (
-        <RoundedBox args={[0.5, 0.96, 1.78]} radius={0.2} position={[-2.16, 0.62, cx]} material={outsoleRubber}/>
-      )}
-      {toe === "perf" && [0,1].flatMap(r => [0,1,2,3].map(c => (
-        <mesh key={`perf-${r}-${c}`} position={[-1.95 + r*0.32, 1.24 + r*0.04, cx - 0.55 + c*0.4]} material={perfMat}>
-          <cylinderGeometry args={[0.045, 0.045, 0.05, 10]}/>
-        </mesh>
-      )))}
-      <RoundedBox args={[1.05, 1.2, 0.12]} radius={0.06} position={[-0.45, 1.4, 0.9]} rotation={[-0.14,0,0]} material={upperMat}/>
-      <RoundedBox args={[2.8, 0.18, 0.06]} radius={0.04} position={[0.05, 0.88, 1.44]} material={accentMat}/>
-      {[-0.95,-0.5,-0.05,0.4,0.82,1.2,1.55].map((x,i) => (
-        <RoundedBox key={i} args={[0.12, 0.06, 1.28]} radius={0.03}
-          position={[x, 1.52+i*0.03, 0.84]} rotation={[-0.12,0,0]} material={laceMat}/>
-      ))}
-      <RoundedBox args={[0.22, 0.68, 0.13]} radius={0.06} position={[2.78, 0.96, 0.1]} material={accentMat}/>
-      <RoundedBox args={[0.22, 0.68, 0.13]} radius={0.06} position={[1.9, 2.9, 0.1]} material={accentMat}/>
+    <group rotation={[0.08, -0.3, 0.03]} position={[0, -1.55, 0]} scale={0.84}>
+      <ChunkySole soleMat={soleMat} outsoleMat={outsoleRubber} toe={toe} toeMat={outsoleRubber} depth={2.04}/>
+      <group position={[0, liftY, 0]}>
+        <mesh geometry={shoeGeo} material={upperMat} position={[0, 0, cx]} castShadow/>
+        {/* Perforated toe (option) */}
+        {toe === "perf" && [0,1].flatMap(r => [0,1,2,3].map(c => (
+          <mesh key={`perf-${r}-${c}`} position={[-1.95 + r*0.32, 1.24 + r*0.04, 0.55 - c*0.4]} material={perfMat}>
+            <cylinderGeometry args={[0.045, 0.045, 0.05, 10]}/>
+          </mesh>
+        )))}
+        {/* Padded tongue rising into the collar */}
+        <RoundedBox args={[1.05, 1.3, 0.12]} radius={0.06} position={[-0.4, 1.5, 0.96]} rotation={[-0.14,0,0]} material={tongueMat}/>
+        {/* Accent stripe */}
+        <RoundedBox args={[2.8, 0.2, 0.06]} radius={0.04} position={[0.05, 0.82, 1.5]} material={accentMat}/>
+        {/* Laces — extra rows up the higher collar */}
+        {showLaces && [-0.95,-0.5,-0.05,0.4,0.82,1.2,1.55].map((x,i) => (
+          <RoundedBox key={`l-${i}`} args={[0.13, 0.06, 1.32]} radius={0.03} position={[x, 1.52+i*0.03, 0.9]} rotation={[-0.12,0,0]} material={laceMat}/>
+        ))}
+        {/* Heel tab + collar trim + pull loop */}
+        <RoundedBox args={[0.24, 0.7, 0.14]} radius={0.06} position={[2.78, 0.96, 0.1]} material={accentMat}/>
+        <RoundedBox args={[0.24, 0.7, 0.14]} radius={0.06} position={[1.95, 2.9, 0.1]} material={accentMat}/>
+        <Torus args={[0.16, 0.05, 8, 16]} position={[2.5, 3.2, 0.1]} rotation={[Math.PI/2, 0, 0]} material={accentMat}/>
+      </group>
     </group>
   );
 }
@@ -1051,37 +1076,53 @@ function Sandal3D({ colors, pattern, options }: { colors: ProductColors; pattern
 // SLIP-ON
 // ─────────────────────────────────────────────
 function SlipOn3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.68, 0, 0.3, finishOf(options));
-  const soleCol = SOLE_COLORS[options?.sole || "white"] || colors.secondary;
-  const sole = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(soleCol), roughness: 0.88 }), [soleCol]);
-  const elastic = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining || "#aaa"), roughness: 0.88 }), [colors.lining]);
+  const o = options || {};
+  const mat = useMat(colors, pattern, 0.6, 0, 0.35, finishOf(o));
+  const soleCol = SOLE_COLORS[o.sole || "white"] || colors.secondary;
+  const sole = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(soleCol), roughness: 0.8, clearcoat: 0.2 }), [soleCol]);
+  const foxing = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(soleCol).multiplyScalar(0.95), roughness: 0.85 }), [soleCol]);
+  const elastic = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining || colors.secondary), roughness: 0.86 }), [colors.lining, colors.secondary]);
 
+  // Smooth one-piece laceless upper, gently bulbous.
   const shoeShape = useMemo(() => {
     const s = new THREE.Shape();
-    s.moveTo(-2.1,0.1); s.bezierCurveTo(-2.5,0.1,-2.6,0.32,-2.6,0.58); s.bezierCurveTo(-2.6,0.9,-2.3,1.1,-1.85,1.14);
-    s.bezierCurveTo(-0.5,1.2,0.7,1.4,1.4,1.55); s.bezierCurveTo(1.8,1.62,2.05,1.5,2.2,1.28);
-    s.bezierCurveTo(2.48,0.9,2.58,0.55,2.5,0.28); s.bezierCurveTo(2.4,0.06,2.2,0.0,1.95,0.0);
-    s.bezierCurveTo(1.1,-0.05,-1.5,-0.05,-1.9,0.06); s.bezierCurveTo(-2.02,0.08,-2.1,0.1,-2.1,0.1);
+    s.moveTo(-2.1, 0.46);
+    s.bezierCurveTo(-2.56, 0.46, -2.72, 0.78, -2.66, 1.08);
+    s.bezierCurveTo(-2.6, 1.34, -2.24, 1.52, -1.78, 1.56);
+    s.bezierCurveTo(-0.5, 1.64, 0.72, 1.8, 1.46, 1.94);
+    s.bezierCurveTo(1.92, 2.02, 2.2, 1.88, 2.36, 1.62);
+    s.bezierCurveTo(2.62, 1.2, 2.68, 0.85, 2.58, 0.58);
+    s.bezierCurveTo(2.48, 0.42, 2.22, 0.4, 1.96, 0.4);
+    s.lineTo(-2.1, 0.46);
     return s;
   }, []);
-
+  // Thick smooth midsole (chunkier than before, but no tread — keeps the slip-on smooth).
   const soleS = useMemo(() => {
     const s = new THREE.Shape();
-    s.moveTo(-2.25,0); s.bezierCurveTo(-2.65,0,-2.72,0.14,-2.72,0.3); s.bezierCurveTo(-2.72,0.46,-2.54,0.54,-2.25,0.54);
-    s.lineTo(2.18,0.54); s.bezierCurveTo(2.52,0.54,2.62,0.42,2.62,0.26); s.bezierCurveTo(2.62,0.1,2.48,0,2.18,0); s.lineTo(-2.25,0);
+    s.moveTo(-2.4, 0.05);
+    s.bezierCurveTo(-2.8, 0.06, -2.88, 0.32, -2.84, 0.58);
+    s.bezierCurveTo(-2.8, 0.76, -2.5, 0.82, -2.2, 0.82);
+    s.lineTo(2.22, 0.8);
+    s.bezierCurveTo(2.58, 0.8, 2.76, 0.62, 2.76, 0.42);
+    s.bezierCurveTo(2.76, 0.14, 2.5, 0.0, 2.18, 0.0);
+    s.bezierCurveTo(1.2, -0.05, -1.6, -0.05, -2.4, 0.05);
     return s;
   }, []);
-
-  const shoeGeo = useMemo(() => new THREE.ExtrudeGeometry(shoeShape, { depth:1.6, bevelEnabled:true, bevelThickness:0.2, bevelSize:0.22, bevelSegments:7 }), [shoeShape]);
-  const soleGeo2 = useMemo(() => new THREE.ExtrudeGeometry(soleS, { depth:1.6, bevelEnabled:true, bevelThickness:0.07, bevelSize:0.09, bevelSegments:4 }), [soleS]);
+  const shoeGeo = useMemo(() => new THREE.ExtrudeGeometry(shoeShape, { depth:1.78, bevelEnabled:true, bevelThickness:0.24, bevelSize:0.3, bevelSegments:8 }), [shoeShape]);
+  const soleGeo2 = useMemo(() => new THREE.ExtrudeGeometry(soleS, { depth:1.92, bevelEnabled:true, bevelThickness:0.16, bevelSize:0.22, bevelSegments:6 }), [soleS]);
+  const cxU = -0.89; const cxS = -0.96;
 
   return (
-    <group rotation={[0.1,-0.28,0.04]} position={[0,-0.75,0]}>
-      <mesh geometry={soleGeo2} material={sole} position={[0,-0.02,-0.8]}/>
-      <mesh geometry={shoeGeo} material={mat} position={[0,0,-0.8]}/>
-      {/* Elastic gusset panels */}
-      <RoundedBox args={[1.0,0.38,0.1]} radius={0.06} position={[-0.6,1.22,0.82]} rotation={[-0.12,0,0]} material={elastic}/>
-      <RoundedBox args={[1.0,0.38,0.1]} radius={0.06} position={[0.6,1.22,0.82]} rotation={[-0.12,0,0]} material={elastic}/>
+    <group rotation={[0.1,-0.3,0.04]} position={[0,-1.0,0]} scale={0.98}>
+      {/* Thick smooth midsole */}
+      <mesh geometry={soleGeo2} material={sole} position={[0,0,cxS]} castShadow receiveShadow/>
+      {/* Outsole base line for a subtle two-tone */}
+      <mesh geometry={soleGeo2} material={foxing} position={[0,-0.16,cxS]} scale={[1.0,0.4,1.0]}/>
+      {/* Smooth upper */}
+      <mesh geometry={shoeGeo} material={mat} position={[0,0,cxU]} castShadow/>
+      {/* Elastic gusset panels — slip-on signature */}
+      <RoundedBox args={[1.0,0.42,0.1]} radius={0.06} position={[-0.55,1.5,0.86]} rotation={[-0.12,0,0]} material={elastic}/>
+      <RoundedBox args={[1.0,0.42,0.1]} radius={0.06} position={[0.55,1.5,0.86]} rotation={[-0.12,0,0]} material={elastic}/>
     </group>
   );
 }

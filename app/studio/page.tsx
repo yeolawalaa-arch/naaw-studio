@@ -12,7 +12,8 @@ const Product3DViewer = dynamic(() => import("../../components/Product3DViewer")
 // Free plan: only these 5 products
 const FREE_PRODUCTS: ProductType[] = ["tshirt", "hoodie", "sneaker-low", "cap", "tote"];
 
-const PRODUCTS: { type: ProductType; label: string; category: string }[] = [
+type Audience = "men" | "women"; // omitted = unisex (shows for everyone)
+const PRODUCTS: { type: ProductType; label: string; category: string; audience?: Audience }[] = [
   { type: "tshirt", label: "T-Shirt", category: "Tops" },
   { type: "shirt", label: "Shirt", category: "Tops" },
   { type: "polo", label: "Polo", category: "Tops" },
@@ -22,11 +23,11 @@ const PRODUCTS: { type: ProductType; label: string; category: string }[] = [
   { type: "shorts", label: "Shorts", category: "Bottoms" },
   { type: "joggers", label: "Joggers", category: "Bottoms" },
   { type: "jeans", label: "Jeans", category: "Bottoms" },
-  { type: "saree", label: "Saree", category: "Traditional" },
+  { type: "saree", label: "Saree", category: "Traditional", audience: "women" },
   { type: "sneaker-low", label: "Sneaker Low", category: "Footwear" },
   { type: "sneaker-high", label: "Sneaker High", category: "Footwear" },
   { type: "boot", label: "Boot", category: "Footwear" },
-  { type: "sandal", label: "Sandal", category: "Footwear" },
+  { type: "sandal", label: "Sandal", category: "Footwear", audience: "women" },
   { type: "slip-on", label: "Slip-On", category: "Footwear" },
   { type: "cap", label: "Cap", category: "Hats" },
   { type: "beanie", label: "Beanie", category: "Hats" },
@@ -35,17 +36,22 @@ const PRODUCTS: { type: ProductType; label: string; category: string }[] = [
   { type: "tote", label: "Tote Bag", category: "Bags" },
   { type: "watch", label: "Watch", category: "Accessories" },
   { type: "sunglasses", label: "Sunglasses", category: "Accessories" },
-  { type: "belt", label: "Belt", category: "Accessories" },
-  { type: "chain", label: "Chain", category: "Accessories" },
-  { type: "wallet", label: "Wallet", category: "Accessories" },
-  { type: "scarf", label: "Scarf", category: "Accessories" },
+  { type: "belt", label: "Belt", category: "Accessories", audience: "men" },
+  { type: "chain", label: "Chain", category: "Accessories", audience: "men" },
+  { type: "wallet", label: "Wallet", category: "Accessories", audience: "men" },
+  { type: "scarf", label: "Scarf", category: "Accessories", audience: "women" },
   { type: "socks", label: "Socks", category: "Accessories" },
   { type: "phone-case", label: "Phone Case", category: "Accessories" },
   { type: "ring", label: "Ring", category: "Accessories" },
-  { type: "earrings", label: "Earrings", category: "Accessories" },
+  { type: "earrings", label: "Earrings", category: "Accessories", audience: "women" },
 ];
 
 const CATEGORIES = ["Tops", "Bottoms", "Footwear", "Hats", "Bags", "Accessories", "Traditional"];
+const GENDERS: { id: "unisex" | "men" | "women"; label: string }[] = [
+  { id: "unisex", label: "Unisex" },
+  { id: "men", label: "Men" },
+  { id: "women", label: "Women" },
+];
 
 const PATTERN_STYLES: { id: string; label: string; patterns: { id: string; label: string }[] }[] = [
   { id: "basic", label: "✦ Basic", patterns: [
@@ -170,6 +176,31 @@ const DEFAULT_COLORS: ProductColors = {
   main: "#111111", secondary: "#1a1a1a", accent: "#FFD700", detail: "#888888", lining: "#222222"
 };
 
+// Each control group gets its own clearly-labelled section with a one-line role.
+function Section({ n, title, role, badge, accent, children }: {
+  n: number; title: string; role: string; badge?: React.ReactNode; accent?: string; children: React.ReactNode;
+}) {
+  return (
+    <section className="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
+      <div className="flex items-start gap-2.5 mb-3">
+        <span
+          className="flex-shrink-0 w-5 h-5 rounded-full text-black text-[10px] font-black flex items-center justify-center mt-0.5"
+          style={{ background: accent ?? "#FFD700" }}>
+          {n}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-xs font-bold text-white tracking-wide">{title}</h3>
+            {badge}
+          </div>
+          <p className="text-[10px] text-white/40 leading-snug mt-0.5">{role}</p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
 function ProBadge({ onClick }: { onClick: () => void }) {
   return (
     <button onClick={onClick} className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-400/20 border border-yellow-400/40 rounded-full text-yellow-400 text-[9px] font-bold hover:bg-yellow-400/30 transition">
@@ -213,6 +244,7 @@ export default function StudioPage() {
 
   const [product, setProduct] = useState<ProductType>("tshirt");
   const [activeCategory, setActiveCategory] = useState("Tops");
+  const [gender, setGender] = useState<"unisex" | "men" | "women">("unisex");
   const [colors, setColors] = useState<ProductColors>(DEFAULT_COLORS);
   const [pattern, setPattern] = useState("solid");
   const [aiPrompt, setAiPrompt] = useState("");
@@ -233,6 +265,11 @@ export default function StudioPage() {
 
   const productLabel = PRODUCTS.find(p => p.type === product)?.label ?? "";
   const canPrint = PRINTABLE.has(product);
+
+  // Unisex = show all. Men hides women-only items; Women hides men-only items.
+  const matchesGender = (a?: Audience) =>
+    gender === "unisex" ? true : gender === "men" ? a !== "women" : a !== "men";
+  const visibleProducts = PRODUCTS.filter(p => p.category === activeCategory && matchesGender(p.audience));
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -322,40 +359,61 @@ export default function StudioPage() {
 
       <div className="flex flex-col lg:flex-row h-[calc(100vh-65px)]">
         {/* Left Panel */}
-        <div className="lg:w-[340px] flex-shrink-0 overflow-y-auto border-r border-white/10 p-5 space-y-6">
+        <div className="lg:w-[360px] flex-shrink-0 overflow-y-auto border-r border-white/10 p-4 space-y-4">
 
-          {/* Product Picker */}
-          <div>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Product Type</p>
-            <div className="flex gap-2 flex-wrap mb-3">
+          {/* Panel intro — explains how the sections work together */}
+          <div className="px-1">
+            <p className="text-[11px] font-black tracking-widest text-white/70">DESIGN STUDIO</p>
+            <p className="text-[10px] text-white/35 leading-snug mt-0.5">Work top to bottom — each numbered section does one job.</p>
+          </div>
+
+          {/* 1 — Product Type */}
+          <Section n={1} title="Product Type"
+            role="Pick what you're designing. Choose who it's for, then a category.">
+            {/* Gender filter */}
+            <div className="flex gap-1.5 mb-3">
+              {GENDERS.map(g => (
+                <button key={g.id} onClick={() => setGender(g.id)}
+                  className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition ${gender === g.id ? "bg-white text-black" : "bg-white/8 border border-white/10 text-white/55 hover:bg-white/15"}`}>
+                  {g.label}
+                </button>
+              ))}
+            </div>
+            {/* Category pills */}
+            <div className="flex gap-1.5 flex-wrap mb-3">
               {CATEGORIES.map(cat => (
                 <button key={cat} onClick={() => setActiveCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-semibold transition ${activeCategory === cat ? "bg-white text-black" : "bg-white/10 text-white/60 hover:bg-white/20"}`}>
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition ${activeCategory === cat ? "bg-white text-black" : "bg-white/10 text-white/60 hover:bg-white/20"}`}>
                   {cat}
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {PRODUCTS.filter(p => p.category === activeCategory).map(p => {
-                const locked = !isPro && !FREE_PRODUCTS.includes(p.type);
-                return (
-                  <button key={p.type} onClick={() => handleProductSelect(p.type)}
-                    className={`py-2 px-1 rounded-lg text-[11px] font-semibold transition text-center relative ${product === p.type ? "bg-white text-black" : locked ? "bg-white/4 border border-white/8 text-white/30" : "bg-white/8 border border-white/10 text-white/70 hover:bg-white/15"}`}>
-                    {p.label}
-                    {locked && <span className="absolute top-1 right-1 text-[8px]">🔒</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Product Options — unique per product */}
-          {(PRODUCT_OPTIONS[product]?.length ?? 0) > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-[10px] text-white/40 uppercase tracking-widest">{productLabel} Options</p>
-                <span className="text-[9px] text-white/25">✦ best in 3D</span>
+            {/* Product grid */}
+            {visibleProducts.length === 0 ? (
+              <p className="text-[10px] text-white/30 py-3 text-center leading-snug">
+                No {gender === "unisex" ? "" : gender + " "}items in {activeCategory}. Try another category or switch to Unisex.
+              </p>
+            ) : (
+              <div className="grid grid-cols-3 gap-1.5">
+                {visibleProducts.map(p => {
+                  const locked = !isPro && !FREE_PRODUCTS.includes(p.type);
+                  return (
+                    <button key={p.type} onClick={() => handleProductSelect(p.type)}
+                      className={`py-2 px-1 rounded-lg text-[11px] font-semibold transition text-center relative ${product === p.type ? "bg-white text-black" : locked ? "bg-white/4 border border-white/8 text-white/30" : "bg-white/8 border border-white/10 text-white/70 hover:bg-white/15"}`}>
+                      {p.label}
+                      {locked && <span className="absolute top-1 right-1 text-[8px]">🔒</span>}
+                    </button>
+                  );
+                })}
               </div>
+            )}
+          </Section>
+
+          {/* 2 — Product Options (unique per product) */}
+          {(PRODUCT_OPTIONS[product]?.length ?? 0) > 0 && (
+            <Section n={2} title={`${productLabel} Options`}
+              role="Real materials & parts unique to this product — metal, lens, sole, gem, phone model & more."
+              badge={<span className="text-[9px] text-black bg-yellow-400 rounded-full px-1.5 py-0.5 font-bold">✦ 3D</span>}>
               <div className="space-y-3">
                 {PRODUCT_OPTIONS[product].map(opt => (
                   <div key={opt.id}>
@@ -375,15 +433,13 @@ export default function StudioPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </Section>
           )}
 
-          {/* AI Prompt */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <p className="text-[10px] text-white/40 uppercase tracking-widest">AI Design Generator</p>
-              {!isPro && <ProBadge onClick={() => setShowUpgrade(true)} />}
-            </div>
+          {/* 3 — AI Design Generator */}
+          <Section n={3} title="AI Design Generator"
+            role="Describe a vibe in plain words — AI sets colors, pattern & options for you."
+            badge={!isPro ? <ProBadge onClick={() => setShowUpgrade(true)} /> : undefined}>
             <div className="flex gap-2">
               <input value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleAI()}
@@ -396,10 +452,11 @@ export default function StudioPage() {
               </button>
             </div>
             {aiResult && <p className="mt-2 text-xs text-white/50 leading-relaxed">{aiResult}</p>}
-          </div>
+          </Section>
 
-          {/* Presets */}
-          <div>
+          {/* 4 — Style Presets */}
+          <Section n={4} title="Style Presets"
+            role="One-tap ready-made looks — Indian textile crafts or street staples.">
             <div className="flex gap-3 mb-3">
               <button onClick={() => setActiveTab("culture")}
                 className={`text-[11px] font-bold tracking-wider pb-1 transition border-b-2 ${activeTab === "culture" ? "border-white text-white" : "border-transparent text-white/40"}`}>
@@ -418,11 +475,11 @@ export default function StudioPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </Section>
 
-          {/* Color Palettes */}
-          <div>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Color Palettes</p>
+          {/* 5 — Color Palettes */}
+          <Section n={5} title="Color Palettes"
+            role="Curated multi-color sets applied across the whole product at once.">
             <div className="grid grid-cols-4 gap-1.5">
               {PALETTES.map(p => (
                 <button key={p.name} onClick={() => setColors(p.colors)} title={p.name}
@@ -430,11 +487,11 @@ export default function StudioPage() {
                   style={{ background: `linear-gradient(135deg, ${p.colors.main} 50%, ${p.colors.accent} 50%)` }} />
               ))}
             </div>
-          </div>
+          </Section>
 
-          {/* Color Pickers */}
-          <div>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Custom Colors</p>
+          {/* 6 — Custom Colors */}
+          <Section n={6} title="Custom Colors"
+            role="Hand-tune each zone: main, secondary, accent, detail & lining.">
             <div className="space-y-2">
               {COLOR_LABELS.map(key => (
                 <div key={key} className="flex items-center gap-3">
@@ -446,12 +503,11 @@ export default function StudioPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Section>
 
-          {/* Pattern / Texture */}
-          <div>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">Pattern / Texture</p>
-
+          {/* 7 — Pattern / Texture */}
+          <Section n={7} title="Pattern / Texture"
+            role="Choose a print, set its strength, and pick where it sits on the product.">
             {/* Style tabs */}
             <div className="flex gap-1.5 flex-wrap mb-3">
               {PATTERN_STYLES.map(s => (
@@ -491,14 +547,12 @@ export default function StudioPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </Section>
 
-          {/* Text / Logo */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <p className="text-[10px] text-white/40 uppercase tracking-widest">Text / Logo</p>
-              {!isPro && <ProBadge onClick={() => setShowUpgrade(true)} />}
-            </div>
+          {/* 8 — Text / Logo */}
+          <Section n={8} title="Text / Logo"
+            role="Add your brand name or slogan, style it, and drag to place it on the preview."
+            badge={!isPro ? <ProBadge onClick={() => setShowUpgrade(true)} /> : undefined}>
             {!isPro ? (
               <button onClick={() => setShowUpgrade(true)}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs text-white/40 hover:bg-white/10 transition text-center">
@@ -551,15 +605,13 @@ export default function StudioPage() {
                 </div>
               </>
             )}
-          </div>
+          </Section>
 
-          {/* Custom Print / Graphic — printable products only */}
+          {/* 9 — Custom Print / Graphic (printable products only) */}
           {canPrint && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-[10px] text-white/40 uppercase tracking-widest">Custom Print / Graphic</p>
-                {!isPro && <ProBadge onClick={() => setShowUpgrade(true)} />}
-              </div>
+            <Section n={9} title="Custom Print / Graphic"
+              role="Upload your own artwork or logo image to print on this product."
+              badge={!isPro ? <ProBadge onClick={() => setShowUpgrade(true)} /> : undefined}>
               {!isPro ? (
                 <button onClick={() => setShowUpgrade(true)}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs text-white/40 hover:bg-white/10 transition text-center">
@@ -597,40 +649,48 @@ export default function StudioPage() {
                   </div>
                 </>
               )}
-            </div>
+            </Section>
           )}
 
-          {/* Export */}
-          <div>
+          {/* 10 — Export */}
+          <Section n={10} title="Export"
+            role="Download your finished design as a file to share or print.">
             <button onClick={handleExport}
               className={`w-full py-3 rounded-xl text-sm font-bold transition ${isPro ? "bg-white text-black hover:bg-white/90" : "bg-white/10 text-white/40 hover:bg-white/15"}`}>
               {isPro ? "Export SVG" : "🔒 Export — Pro Only"}
             </button>
-          </div>
+          </Section>
         </div>
 
-        {/* Right Panel — Canvas */}
+        {/* Right Panel — Live Preview */}
         <div className="flex-1 flex flex-col bg-[#0d0d0d]">
-          {/* View toggle */}
-          <div className="flex items-center justify-center gap-2 pt-4">
-            <button onClick={() => setView3D(false)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${!view3D ? "bg-white text-black" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
-              2D Flat
-            </button>
-            <button onClick={() => setView3D(true)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${view3D ? "bg-white text-black" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
-              ✦ 3D Live Preview
-            </button>
+          {/* Preview header — names this area and the current product */}
+          <div className="flex items-center justify-between px-6 pt-4">
+            <div>
+              <p className="text-[10px] text-white/35 uppercase tracking-widest">Live Preview</p>
+              <p className="text-sm font-bold text-white">{productLabel}</p>
+            </div>
+            {/* View toggle */}
+            <div className="flex items-center gap-2">
+              <button onClick={() => setView3D(false)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${!view3D ? "bg-white text-black" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
+                2D Flat
+              </button>
+              <button onClick={() => setView3D(true)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${view3D ? "bg-white text-black" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
+                ✦ 3D Live Preview
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 flex items-center justify-center p-6">
             {view3D ? (
-              <div className="w-full max-w-xl" style={{ height: "480px" }}>
+              <div className="w-full max-w-3xl" style={{ height: "min(640px, 72vh)" }}>
                 <Product3DViewer productType={product} colors={colors} pattern={pattern} options={options}/>
                 <p className="text-center text-white/25 text-[10px] mt-2">Drag to rotate · Scroll to zoom</p>
               </div>
             ) : (
-              <div id="product-canvas" className="w-full max-w-xl">
+              <div id="product-canvas" className="w-full max-w-2xl">
                 <ProductCanvas productType={product} colors={colors} pattern={pattern}
                   patternIntensity={patternIntensity} patternZone={patternZone}
                   textOverlay={isPro ? textOverlay : undefined}
