@@ -438,9 +438,9 @@ function gemCutGeometry(cut: string | undefined, r: number): THREE.BufferGeometr
   }
 }
 
-function RotatingModel({ children }: { children: React.ReactNode }) {
+function RotatingModel({ children, still }: { children: React.ReactNode; still?: boolean }) {
   const ref = useRef<THREE.Group>(null);
-  useFrame((_, delta) => { if (ref.current) ref.current.rotation.y += delta * 0.38; });
+  useFrame((_, delta) => { if (ref.current && !still) ref.current.rotation.y += delta * 0.38; });
   return <group ref={ref}>{children}</group>;
 }
 
@@ -2157,21 +2157,21 @@ function Mannequin({ gender }: { gender: "male" | "female" }) {
       </group>
       {/* Neck */}
       <Cylinder args={[0.2, 0.25, 0.52, 24]} position={[0, 2.28, 0]} material={skin}/>
-      {/* Torso — flattened + recessed so the garment covers it */}
-      <group scale={[1, 1, 0.45]} position={[0, 0, -0.18]}>
+      {/* Torso — flattened + recessed so the (flat) garment panels cover it */}
+      <group scale={[1, 1, 0.38]} position={[0, 0, -0.34]}>
         <Cylinder args={[shoulderR, waistR, 1.72, 32]} position={[0, 1.05, 0]} material={skin}/>
         <Cylinder args={[waistR, hipR, 1.2, 32]} position={[0, -0.5, 0]} material={skin}/>
         <Sphere args={[shoulderR*0.6, 24, 24]} position={[0, 1.84, 0]} material={skin}/>
         {female && <>
-          <mesh position={[-0.32, 1.18, 0.95]} material={skin}><sphereGeometry args={[0.3,20,20]}/></mesh>
-          <mesh position={[0.32, 1.18, 0.95]} material={skin}><sphereGeometry args={[0.3,20,20]}/></mesh>
+          <mesh position={[-0.27, 0.98, 0.5]} scale={[1.15,1,0.72]} material={skin}><sphereGeometry args={[0.22,20,20]}/></mesh>
+          <mesh position={[0.27, 0.98, 0.5]} scale={[1.15,1,0.72]} material={skin}><sphereGeometry args={[0.22,20,20]}/></mesh>
         </>}
       </group>
       {/* Pelvis */}
       <Sphere args={[hipR*0.86, 24, 24]} position={[0, -1.05, -0.18]} scale={[1, 0.78, 0.5]} material={skin}/>
-      {/* Arms (slight A-pose splay) */}
+      {/* Arms (slight A-pose splay; set back so a top's panel covers the upper arm) */}
       {[-1, 1].map((sgn) => (
-        <group key={sgn} position={[sgn*(shoulderR+0.04), 1.72, 0]} rotation={[0, 0, -sgn*0.18]}>
+        <group key={sgn} position={[sgn*(shoulderR+0.04), 1.72, -0.16]} rotation={[0, 0, -sgn*0.18]}>
           <Sphere args={[armR*1.2, 18, 18]} material={skin}/>
           <Cylinder args={[armR, armR*0.9, 1.3, 18]} position={[0, -0.66, 0]} material={skin}/>
           <Sphere args={[armR*0.95, 16, 16]} position={[0, -1.32, 0]} material={skin}/>
@@ -2211,12 +2211,23 @@ const MODEL_MAP: Record<string, React.FC<{ colors: ProductColors; pattern: strin
   "ring": Ring3D, "earrings": Earrings3D,
 };
 
-export default function Product3DViewer({ productType, colors, pattern, options, showBody, bodyGender }: {
+// On-body vertical offset (mannequin-space units) so each garment lands on the
+// right part of the body: tops lift to the neck, bottoms drop to the hips,
+// traditional/full-length sit roughly centred. Only applied when showBody.
+const WEAR_OFFSET: Record<string, number> = {
+  tshirt: 0.3, shirt: 0.3, polo: 0.3, hoodie: 0.32, jacket: 0.3, bomber: 0.45,
+  shorts: -1.5, joggers: -2.0, jeans: -2.2,
+  saree: -0.1, lehenga: -0.2, anarkali: 0.0, "salwar-kameez": 0.0, kurti: 0.1,
+  kurta: 0.1, sherwani: 0.05, "nehru-jacket": 0.2, pathani: 0.05, dhoti: -1.3,
+};
+
+export default function Product3DViewer({ productType, colors, pattern, options, showBody, bodyGender, still }: {
   productType: string; colors: ProductColors; pattern: string; options?: Record<string, string>;
-  showBody?: boolean; bodyGender?: "male" | "female";
+  showBody?: boolean; bodyGender?: "male" | "female"; still?: boolean;
 }) {
   const Model = MODEL_MAP[productType] || TShirt3D;
   const onBody = !!showBody;
+  const wy = onBody ? (WEAR_OFFSET[productType] ?? 0) : 0;
   return (
     <Canvas
       camera={{ position: [0, 0, 7], fov: 42 }}
@@ -2231,11 +2242,13 @@ export default function Product3DViewer({ productType, colors, pattern, options,
       <directionalLight position={[0, -4, 5]} intensity={0.4} color="#ffe7c2"/>
       <spotLight position={[0, 9, 5]} angle={0.4} penumbra={0.7} intensity={1.6} castShadow/>
       <Suspense fallback={null}>
-        <RotatingModel>
+        <RotatingModel still={still}>
           {/* On-body view shrinks + lifts the whole rig so the full figure frames cleanly */}
           <group scale={onBody ? 0.65 : 1} position={onBody ? [0, 0.36, 0] : [0, 0, 0]}>
             {onBody && <Mannequin gender={bodyGender === "female" ? "female" : "male"}/>}
-            <Model colors={colors} pattern={pattern} options={options}/>
+            <group position={[0, wy, 0]}>
+              <Model colors={colors} pattern={pattern} options={options}/>
+            </group>
           </group>
         </RotatingModel>
         <ContactShadows position={[0, onBody ? -2.5 : -3.5, 0]} opacity={0.6} scale={16} blur={2.6} resolution={1024} far={5}/>
