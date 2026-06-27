@@ -47,11 +47,12 @@ const PRODUCTS: { type: ProductType; label: string; category: string }[] = [
 const CATEGORIES = ["Tops", "Bottoms", "Footwear", "Hats", "Bags", "Accessories", "Traditional"];
 
 const PATTERN_STYLES: { id: string; label: string; patterns: { id: string; label: string }[] }[] = [
-  { id: "basic", label: "Basic", patterns: [
+  { id: "basic", label: "✦ Basic", patterns: [
     { id: "solid", label: "Solid" },
     { id: "gradient", label: "Gradient" },
     { id: "camo", label: "Camo" },
     { id: "tiedye", label: "Tie-Dye" },
+    { id: "chevron", label: "Chevron" },
   ]},
   { id: "indian", label: "🇮🇳 Indian", patterns: [
     { id: "bandhani", label: "Bandhani" },
@@ -70,20 +71,39 @@ const PATTERN_STYLES: { id: string; label: string; patterns: { id: string; label
     { id: "asanoha", label: "Asanoha" },
     { id: "seigaiha", label: "Seigaiha" },
     { id: "wave", label: "Wave" },
+    { id: "kikko", label: "Kikko" },
   ]},
   { id: "african", label: "🌍 African", patterns: [
     { id: "kente", label: "Kente" },
     { id: "ankara", label: "Ankara" },
     { id: "mudcloth", label: "Mudcloth" },
+    { id: "adinkra", label: "Adinkra" },
+    { id: "kanga", label: "Kanga" },
   ]},
   { id: "middleeast", label: "🕌 Middle East", patterns: [
     { id: "arabesque", label: "Arabesque" },
     { id: "mosaic", label: "Mosaic" },
+    { id: "moroccan", label: "Moroccan" },
+    { id: "persian", label: "Persian" },
+    { id: "kilim", label: "Kilim" },
+    { id: "suzani", label: "Suzani" },
   ]},
-  { id: "western", label: "🌎 Western", patterns: [
+  { id: "latin", label: "🌎 Latin", patterns: [
+    { id: "aztec", label: "Aztec" },
+  ]},
+  { id: "european", label: "🇪🇺 European", patterns: [
+    { id: "houndstooth", label: "Houndstooth" },
+    { id: "argyle", label: "Argyle" },
+    { id: "damask", label: "Damask" },
+    { id: "celtic", label: "Celtic" },
+    { id: "nordic", label: "Nordic" },
+    { id: "greek-key", label: "Greek Key" },
     { id: "plaid", label: "Plaid" },
     { id: "pinstripe", label: "Pinstripe" },
     { id: "denim", label: "Denim" },
+  ]},
+  { id: "asian", label: "🌏 Asian", patterns: [
+    { id: "batik", label: "Batik" },
   ]},
   { id: "minimal", label: "◻ Minimal", patterns: [
     { id: "dots", label: "Dots" },
