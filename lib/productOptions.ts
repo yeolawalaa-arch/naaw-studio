@@ -172,6 +172,8 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
   "sneaker-low": [
     { id: "material", label: "Upper", default: "leather", choices: [
       F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("mesh","Mesh"),F("patent","Patent") ] },
+    { id: "toe", label: "Toe Box", default: "cap", choices: [
+      F("cap","Rubber Cap"),F("perf","Perforated"),F("plain","Plain") ] },
     { id: "sole", label: "Sole Color", default: "white", choices: [
       C("white","White","#F2F2F2"),C("gum","Gum","#C9A26A"),C("black","Black","#1C1C1C"),C("cream","Cream","#EBE3D0") ] },
     { id: "lace", label: "Laces", default: "white", choices: [
@@ -180,6 +182,8 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
   "sneaker-high": [
     { id: "material", label: "Upper", default: "leather", choices: [
       F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("patent","Patent") ] },
+    { id: "toe", label: "Toe Box", default: "cap", choices: [
+      F("cap","Rubber Cap"),F("perf","Perforated"),F("plain","Plain") ] },
     { id: "sole", label: "Sole Color", default: "white", choices: [
       C("white","White","#F2F2F2"),C("gum","Gum","#C9A26A"),C("black","Black","#1C1C1C") ] },
     { id: "lace", label: "Laces", default: "white", choices: [
@@ -233,6 +237,8 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
       F("leather","Leather"),F("steel","Steel"),F("nylon","NATO"),F("rubber","Rubber") ] },
     { id: "dial", label: "Dial", default: "sunburst", choices: [
       F("sunburst","Sunburst"),F("matte","Matte"),F("skeleton","Skeleton") ] },
+    { id: "markers", label: "Markers", default: "index", choices: [
+      F("index","Index Bars"),F("roman","Roman"),F("dot","Dots"),F("none","Minimal") ] },
     { id: "glass", label: "Crystal Tint", default: "clear", choices: [
       C("clear","Clear","#cfe8ff"),C("blue","Blue","#3a7bd5"),C("smoke","Smoke","#555") ] },
   ],
@@ -274,9 +280,14 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
     { id: "length", label: "Length", default: "crew", choices: [F("ankle","Ankle"),F("crew","Crew"),F("knee","Knee-High")] },
   ],
   "phone-case": [
+    { id: "phone", label: "Phone Model", default: "iphone-15-pro", choices: [
+      F("iphone-15-pro-max","iPhone 15 Pro Max"),F("iphone-15-pro","iPhone 15 Pro"),
+      F("iphone-15","iPhone 15"),F("iphone-se","iPhone SE"),
+      F("galaxy-s24-ultra","Galaxy S24 Ultra"),F("galaxy-s24","Galaxy S24"),
+      F("pixel-8-pro","Pixel 8 Pro"),F("oneplus-12","OnePlus 12") ] },
     { id: "material", label: "Material", default: "patent", choices: [
       F("patent","Glossy"),F("matte","Matte"),F("leather","Leather"),F("silicone","Silicone") ] },
-    { id: "lens", label: "Lens Ring", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("black","Black")] },
+    { id: "lens", label: "Camera Ring", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("black","Black")] },
   ],
   ring: [
     { id: "metal", label: "Band Metal", default: "gold", choices: [

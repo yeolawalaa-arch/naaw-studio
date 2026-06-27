@@ -447,10 +447,12 @@ function SneakerLow3D({ colors, pattern, options }: { colors: ProductColors; pat
   const laceId = o.lace || "white";
   const laceCol = laceId === "accent" ? colors.accent : (LACE_COLORS[laceId] || "#FFFFFF");
   const showLaces = laceId !== "none";
+  const toe = o.toe || "cap";
   // Material — white upper, finish varies (leather/canvas/suede/mesh/patent)
   const upperMat = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: 0xF6F6F6, roughness: fin.roughness, metalness: 0, clearcoat: fin.clearcoat, clearcoatRoughness: 0.08,
   }), [fin]);
+  const perfMat = useMemo(() => new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.9 }), []);
   const soleMat = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(soleCol), roughness: 0.88, metalness: 0,
   }), [soleCol]);
@@ -518,6 +520,15 @@ function SneakerLow3D({ colors, pattern, options }: { colors: ProductColors; pat
       <mesh geometry={soleGeo} material={soleMat} position={[0, 0.28, cx]}/>
       {/* Upper shoe body */}
       <mesh geometry={shoeGeo} material={upperMat} position={[0, 0, cx]}/>
+      {/* Toe box — rubber cap / perforations / plain */}
+      {toe === "cap" && (
+        <RoundedBox args={[0.5, 0.92, 1.78]} radius={0.2} position={[-2.16, 0.6, cx]} material={outsoleRubber}/>
+      )}
+      {toe === "perf" && [0,1].flatMap(r => [0,1,2,3].map(c => (
+        <mesh key={`perf-${r}-${c}`} position={[-1.95 + r*0.32, 1.2 + r*0.04, cx - 0.55 + c*0.4]} material={perfMat}>
+          <cylinderGeometry args={[0.045, 0.045, 0.05, 10]}/>
+        </mesh>
+      )))}
       {/* Tongue — flat panel at front opening */}
       <RoundedBox args={[1.05, 1.15, 0.12]} radius={0.06} position={[-0.45, 1.35, 0.9]}
         rotation={[-0.14, 0, 0]} material={tongueMat}/>
@@ -550,9 +561,11 @@ function SneakerHigh3D({ colors, pattern, options }: { colors: ProductColors; pa
   const soleCol = SOLE_COLORS[o.sole || "white"] || "#F2F2F2";
   const laceId = o.lace || "white";
   const laceCol = laceId === "accent" ? colors.accent : (LACE_COLORS[laceId] || "#FFFFFF");
+  const toe = o.toe || "cap";
   const upperMat = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(colors.main), roughness: fin.roughness, metalness: 0, clearcoat: fin.clearcoat, clearcoatRoughness: 0.1,
   }), [colors.main, fin]);
+  const perfMat = useMemo(() => new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.9 }), []);
   const soleMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(soleCol), roughness: 0.88 }), [soleCol]);
   const outsoleRubber = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(soleCol).multiplyScalar(0.86), roughness: 0.95 }), [soleCol]);
   const accentMat = useMemo(() => new THREE.MeshPhysicalMaterial({
@@ -600,6 +613,15 @@ function SneakerHigh3D({ colors, pattern, options }: { colors: ProductColors; pa
       <mesh geometry={soleGeo} material={outsoleRubber} position={[0, -0.04, cx]}/>
       <mesh geometry={soleGeo} material={soleMat} position={[0, 0.28, cx]}/>
       <mesh geometry={shoeGeo} material={upperMat} position={[0, 0, cx]}/>
+      {/* Toe box — rubber cap / perforations / plain */}
+      {toe === "cap" && (
+        <RoundedBox args={[0.5, 0.96, 1.78]} radius={0.2} position={[-2.16, 0.62, cx]} material={outsoleRubber}/>
+      )}
+      {toe === "perf" && [0,1].flatMap(r => [0,1,2,3].map(c => (
+        <mesh key={`perf-${r}-${c}`} position={[-1.95 + r*0.32, 1.24 + r*0.04, cx - 0.55 + c*0.4]} material={perfMat}>
+          <cylinderGeometry args={[0.045, 0.045, 0.05, 10]}/>
+        </mesh>
+      )))}
       <RoundedBox args={[1.05, 1.2, 0.12]} radius={0.06} position={[-0.45, 1.4, 0.9]} rotation={[-0.14,0,0]} material={upperMat}/>
       <RoundedBox args={[2.8, 0.18, 0.06]} radius={0.04} position={[0.05, 0.88, 1.44]} material={accentMat}/>
       {[-0.95,-0.5,-0.05,0.4,0.82,1.2,1.55].map((x,i) => (
@@ -1149,14 +1171,30 @@ function Watch3D({ colors, pattern, options }: { colors: ProductColors; pattern:
       <Cylinder args={[0.92, 0.92, 0.04, 44]} position={[0,0.14,0]} material={dialMat}/>
       {/* Crystal glass */}
       <Cylinder args={[0.9, 0.9, 0.04, 44]} position={[0,0.18,0]} material={glassMat}/>
-      {/* Hour markers */}
-      {Array.from({length:12},(_,i) => {
-        const a = i*Math.PI/6; return (
-          <mesh key={i} position={[0.75*Math.cos(a), 0.22, 0.75*Math.sin(a)]} material={caseMat}>
-            <boxGeometry args={[0.06, 0.06, 0.12]}/>
-          </mesh>
-        );
-      })}
+      {/* Hour markers — style varies */}
+      {(() => {
+        const m = o.markers || "index";
+        if (m === "none") {
+          return [0,3,6,9].map(i => { const a = i*Math.PI/6; return (
+            <mesh key={i} position={[0.78*Math.cos(a), 0.22, 0.78*Math.sin(a)]} rotation={[0, Math.PI/2 - a, 0]} material={caseMat}>
+              <boxGeometry args={[0.05, 0.05, 0.1]}/>
+            </mesh>
+          );});
+        }
+        return Array.from({length:12},(_,i) => {
+          const a = i*Math.PI/6; const x = 0.75*Math.cos(a), z = 0.75*Math.sin(a);
+          if (m === "dot") return (
+            <mesh key={i} position={[x, 0.22, z]} material={caseMat}><cylinderGeometry args={[0.05, 0.05, 0.05, 14]}/></mesh>
+          );
+          if (m === "roman") return (
+            <mesh key={i} position={[x, 0.22, z]} rotation={[0, Math.PI/2 - a, 0]} material={caseMat}><boxGeometry args={[0.04, 0.05, 0.22]}/></mesh>
+          );
+          // index bars
+          return (
+            <mesh key={i} position={[x, 0.22, z]} rotation={[0, Math.PI/2 - a, 0]} material={caseMat}><boxGeometry args={[0.06, 0.06, 0.15]}/></mesh>
+          );
+        });
+      })()}
       {/* Crown */}
       <Cylinder args={[0.1, 0.1, 0.28, 12]} position={[1.1,0,0]} rotation={[0,0,Math.PI/2]} material={caseMat}/>
       {/* Bands */}
@@ -1357,35 +1395,140 @@ function Socks3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 // ─────────────────────────────────────────────
 // PHONE CASE
 // ─────────────────────────────────────────────
+type PhoneCam = "ios-square" | "ios-diagonal" | "ios-single" | "samsung-vertical" | "pixel-bar" | "oneplus-circle";
+type PhoneFront = "island" | "punch" | "home";
+interface PhoneSpec { w: number; h: number; r: number; thick: number; cam: PhoneCam; front: PhoneFront; lenses?: number; }
+const PHONE_SPECS: Record<string, PhoneSpec> = {
+  "iphone-15-pro-max": { w: 2.12, h: 4.45, r: 0.40, thick: 0.30, cam: "ios-square",       front: "island" },
+  "iphone-15-pro":     { w: 2.00, h: 4.10, r: 0.38, thick: 0.30, cam: "ios-square",       front: "island" },
+  "iphone-15":         { w: 2.00, h: 4.10, r: 0.42, thick: 0.28, cam: "ios-diagonal",     front: "island" },
+  "iphone-se":         { w: 1.82, h: 3.66, r: 0.20, thick: 0.28, cam: "ios-single",       front: "home" },
+  "galaxy-s24-ultra":  { w: 2.16, h: 4.55, r: 0.10, thick: 0.30, cam: "samsung-vertical", front: "punch", lenses: 4 },
+  "galaxy-s24":        { w: 1.94, h: 4.05, r: 0.34, thick: 0.28, cam: "samsung-vertical", front: "punch", lenses: 3 },
+  "pixel-8-pro":       { w: 2.06, h: 4.32, r: 0.38, thick: 0.30, cam: "pixel-bar",        front: "punch" },
+  "oneplus-12":        { w: 2.12, h: 4.45, r: 0.42, thick: 0.32, cam: "oneplus-circle",   front: "punch" },
+};
+
 function PhoneCase3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const caseFin: FabricSpec = options?.material === "matte" ? { roughness: 0.85, clearcoat: 0, sheen: 0 }
-    : options?.material === "leather" ? FABRICS.leather
-    : options?.material === "silicone" ? { roughness: 0.6, clearcoat: 0.2, sheen: 0 }
+  const o = options || {};
+  const spec = PHONE_SPECS[o.phone || "iphone-15-pro"] || PHONE_SPECS["iphone-15-pro"];
+  const caseFin: FabricSpec = o.material === "matte" ? { roughness: 0.85, clearcoat: 0, sheen: 0 }
+    : o.material === "leather" ? FABRICS.leather
+    : o.material === "silicone" ? { roughness: 0.6, clearcoat: 0.2, sheen: 0 }
     : FABRICS.patent;
   const mat = useMat(colors, pattern, 0.55, 0, 0.6, caseFin);
-  const screen = useMemo(() => new THREE.MeshPhysicalMaterial({ color: 0x0A0A12, roughness: 0.02, metalness: 0.08, transmission: 0.22, clearcoat: 1.0 }), []);
-  const cam = useMemo(() => metalMaterial(options?.lens, "#111111"), [options?.lens]);
-  const lens = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.accent), roughness: 0, transmission: 0.6, thickness: 0.5, clearcoat: 1.0 }), [colors.accent]);
+  const screen = useMemo(() => new THREE.MeshPhysicalMaterial({ color: 0x07070C, roughness: 0.04, metalness: 0.1, transmission: 0.18, clearcoat: 1.0, clearcoatRoughness: 0.02 }), []);
+  const ring = useMemo(() => metalMaterial(o.lens, "#1a1a1a"), [o.lens]);
+  const glass = useMemo(() => new THREE.MeshPhysicalMaterial({ color: 0x0b0b16, roughness: 0, metalness: 0.15, transmission: 0.55, thickness: 0.4, clearcoat: 1.0, ior: 1.7, reflectivity: 0.6 }), []);
+  const tint = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.accent), roughness: 0, transmission: 0.5, thickness: 0.4, clearcoat: 1.0 }), [colors.accent]);
+  const dark = useMemo(() => new THREE.MeshPhysicalMaterial({ color: 0x0a0a0c, roughness: 0.25, metalness: 0.2, clearcoat: 0.7 }), []);
+  const flashMat = useMemo(() => new THREE.MeshStandardMaterial({ color: 0xFFE9B0, roughness: 0.15, emissive: 0x2a2008, emissiveIntensity: 0.5 }), []);
+
+  const frontZ = spec.thick / 2;
+  const backZ = -spec.thick / 2;
+
+  // One camera lens: metal ring + glass + tinted centre
+  const Lens = (x: number, y: number, rad: number, key: string) => (
+    <group key={key} position={[x, y, 0]}>
+      <mesh position={[0, 0, backZ - 0.12]} rotation={[Math.PI / 2, 0, 0]} material={ring}><cylinderGeometry args={[rad, rad, 0.2, 28]} /></mesh>
+      <mesh position={[0, 0, backZ - 0.2]} rotation={[Math.PI / 2, 0, 0]} material={glass}><cylinderGeometry args={[rad * 0.74, rad * 0.74, 0.06, 28]} /></mesh>
+      <mesh position={[0, 0, backZ - 0.23]} material={tint}><sphereGeometry args={[rad * 0.42, 16, 16]} /></mesh>
+    </group>
+  );
+  const Flash = (x: number, y: number, key: string) => (
+    <mesh key={key} position={[x, y, backZ - 0.1]} rotation={[Math.PI / 2, 0, 0]} material={flashMat}><cylinderGeometry args={[0.07, 0.07, 0.14, 16]} /></mesh>
+  );
+
+  const renderCamera = () => {
+    const mx = -spec.w * 0.24, my = spec.h * 0.30;
+    switch (spec.cam) {
+      case "ios-square": {
+        const s = spec.w * 0.66;
+        return (<>
+          <RoundedBox args={[s, s, 0.16]} radius={0.18} position={[mx, my, backZ - 0.06]} material={mat} />
+          {Lens(mx - 0.17, my + 0.17, 0.2, "a")}
+          {Lens(mx - 0.17, my - 0.17, 0.2, "b")}
+          {Lens(mx + 0.18, my, 0.2, "c")}
+          {Flash(mx + 0.2, my + 0.2, "f")}
+          <mesh position={[mx + 0.18, my - 0.2, backZ - 0.1]} rotation={[Math.PI / 2, 0, 0]} material={dark}><cylinderGeometry args={[0.05, 0.05, 0.12, 12]} /></mesh>
+        </>);
+      }
+      case "ios-diagonal": {
+        const s = spec.w * 0.6;
+        return (<>
+          <RoundedBox args={[s, s, 0.15]} radius={0.18} position={[mx, my, backZ - 0.06]} material={mat} />
+          {Lens(mx - 0.16, my + 0.16, 0.21, "a")}
+          {Lens(mx + 0.16, my - 0.16, 0.21, "b")}
+          {Flash(mx + 0.18, my + 0.18, "f")}
+        </>);
+      }
+      case "ios-single":
+        return (<>
+          {Lens(mx, my, 0.24, "a")}
+          {Flash(mx + 0.4, my - 0.05, "f")}
+        </>);
+      case "samsung-vertical": {
+        const n = spec.lenses ?? 3, sx = -spec.w * 0.3, topy = spec.h * 0.34;
+        return (<>
+          {Array.from({ length: n }).map((_, i) => Lens(sx, topy - i * 0.46, i < 2 ? 0.21 : 0.15, "s" + i))}
+          {Flash(sx + 0.36, topy - 0.05, "f")}
+        </>);
+      }
+      case "pixel-bar": {
+        const by = spec.h * 0.26;
+        return (<>
+          <RoundedBox args={[spec.w * 0.94, 0.54, 0.16]} radius={0.22} position={[0, by, backZ - 0.05]} material={dark} />
+          {Lens(-spec.w * 0.24, by, 0.2, "a")}
+          {Lens(0, by, 0.2, "b")}
+          <mesh position={[spec.w * 0.2, by, backZ - 0.13]} rotation={[Math.PI / 2, 0, 0]} material={glass}><cylinderGeometry args={[0.12, 0.12, 0.16, 20]} /></mesh>
+          {Flash(spec.w * 0.32, by, "f")}
+        </>);
+      }
+      case "oneplus-circle": {
+        const cy = spec.h * 0.28;
+        return (<>
+          <mesh position={[0, cy, backZ - 0.06]} rotation={[Math.PI / 2, 0, 0]} material={ring}><cylinderGeometry args={[0.66, 0.66, 0.14, 44]} /></mesh>
+          <mesh position={[0, cy, backZ - 0.08]} rotation={[Math.PI / 2, 0, 0]} material={dark}><cylinderGeometry args={[0.56, 0.56, 0.12, 44]} /></mesh>
+          {Lens(0, cy + 0.24, 0.18, "a")}
+          {Lens(-0.22, cy - 0.14, 0.18, "b")}
+          {Lens(0.22, cy - 0.14, 0.18, "c")}
+          {Flash(0.36, cy + 0.26, "f")}
+        </>);
+      }
+    }
+  };
+
+  const renderFront = () => {
+    if (spec.front === "island")
+      return <RoundedBox args={[0.52, 0.17, 0.05]} radius={0.085} position={[0, spec.h * 0.35, frontZ - 0.01]} material={dark} />;
+    if (spec.front === "punch")
+      return <mesh position={[0, spec.h * 0.38, frontZ - 0.01]} rotation={[Math.PI / 2, 0, 0]} material={dark}><cylinderGeometry args={[0.075, 0.075, 0.05, 18]} /></mesh>;
+    // home (SE): forehead camera dot + Touch ID home button
+    return (<>
+      <mesh position={[0, spec.h * 0.40, frontZ - 0.01]} rotation={[Math.PI / 2, 0, 0]} material={dark}><cylinderGeometry args={[0.05, 0.05, 0.05, 14]} /></mesh>
+      <mesh position={[0, -spec.h * 0.40, frontZ]} rotation={[Math.PI / 2, 0, 0]} material={ring}><cylinderGeometry args={[0.22, 0.22, 0.06, 28]} /></mesh>
+      <mesh position={[0, -spec.h * 0.40, frontZ + 0.01]} rotation={[Math.PI / 2, 0, 0]} material={screen}><cylinderGeometry args={[0.17, 0.17, 0.04, 28]} /></mesh>
+    </>);
+  };
+
+  const isHome = spec.front === "home";
+  const screenW = spec.w - (isHome ? 0.28 : 0.2);
+  const screenH = spec.h - (isHome ? 1.0 : 0.34);
+  const screenY = isHome ? 0.08 : 0;
+  const screenR = isHome ? 0.06 : Math.max(0.1, spec.r - 0.08);
+
   return (
-    <group>
-      <RoundedBox args={[2.05, 4.0, 0.28]} radius={0.22} position={[0,0,0]} material={mat}/>
+    <group rotation={[0, 0.25, 0]}>
+      {/* Body */}
+      <RoundedBox args={[spec.w, spec.h, spec.thick]} radius={spec.r} position={[0, 0, 0]} material={mat} />
       {/* Screen */}
-      <RoundedBox args={[1.78, 3.5, 0.08]} radius={0.16} position={[0,0,0.16]} material={screen}/>
-      {/* Camera module */}
-      <RoundedBox args={[0.68, 0.68, 0.12]} radius={0.1} position={[-0.5,1.5,-0.16]} material={cam}/>
-      {/* Camera lenses */}
-      <mesh position={[-0.58,1.58,-0.22]} rotation={[Math.PI/2,0,0]} material={lens}>
-        <cylinderGeometry args={[0.16,0.16,0.12,20]}/>
-      </mesh>
-      <mesh position={[-0.38,1.42,-0.22]} rotation={[Math.PI/2,0,0]} material={lens}>
-        <cylinderGeometry args={[0.14,0.14,0.12,20]}/>
-      </mesh>
-      {/* Flash */}
-      <mesh position={[-0.22,1.6,-0.22]} rotation={[Math.PI/2,0,0]} material={new THREE.MeshPhysicalMaterial({color:0xFFEEAA,roughness:0.1,clearcoat:0.8})}>
-        <cylinderGeometry args={[0.07,0.07,0.08,12]}/>
-      </mesh>
-      {/* Home bar */}
-      <RoundedBox args={[0.62,0.07,0.06]} radius={0.03} position={[0,-1.65,0.2]} material={screen}/>
+      <RoundedBox args={[screenW, screenH, 0.05]} radius={screenR} position={[0, screenY, frontZ]} material={screen} />
+      {renderFront()}
+      {renderCamera()}
+      {/* Side buttons (aluminium frame) */}
+      <RoundedBox args={[0.05, 0.55, spec.thick * 0.7]} radius={0.02} position={[spec.w / 2 + 0.005, spec.h * 0.16, 0]} material={ring} />
+      <RoundedBox args={[0.05, 0.34, spec.thick * 0.7]} radius={0.02} position={[-spec.w / 2 - 0.005, spec.h * 0.22, 0]} material={ring} />
+      <RoundedBox args={[0.05, 0.34, spec.thick * 0.7]} radius={0.02} position={[-spec.w / 2 - 0.005, spec.h * 0.04, 0]} material={ring} />
     </group>
   );
 }
@@ -1530,18 +1673,24 @@ export default function Product3DViewer({ productType, colors, pattern, options 
 }) {
   const Model = MODEL_MAP[productType] || TShirt3D;
   return (
-    <Canvas camera={{ position: [0, 0, 7], fov: 45 }} shadows style={{ background: "#0d0d0d" }}>
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[6, 10, 7]} intensity={1.6} castShadow shadow-mapSize={[2048,2048]}/>
-      <directionalLight position={[-5, 4, -4]} intensity={0.6} color="#aaccff"/>
-      <directionalLight position={[0, -5, 4]} intensity={0.3} color="#ffeecc"/>
-      <spotLight position={[0, 8, 4]} angle={0.35} penumbra={0.6} intensity={1.2} castShadow/>
+    <Canvas
+      camera={{ position: [0, 0, 7], fov: 42 }}
+      shadows
+      dpr={[1, 2]}
+      gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
+      style={{ background: "#0d0d0d" }}
+    >
+      <ambientLight intensity={0.42} />
+      <directionalLight position={[6, 10, 7]} intensity={2.1} castShadow shadow-mapSize={[2048,2048]} shadow-bias={-0.0001}/>
+      <directionalLight position={[-6, 5, -4]} intensity={0.75} color="#bcd4ff"/>
+      <directionalLight position={[0, -4, 5]} intensity={0.4} color="#ffe7c2"/>
+      <spotLight position={[0, 9, 5]} angle={0.4} penumbra={0.7} intensity={1.6} castShadow/>
       <Suspense fallback={null}>
         <RotatingModel>
           <Model colors={colors} pattern={pattern} options={options}/>
         </RotatingModel>
-        <ContactShadows position={[0,-3.5,0]} opacity={0.55} scale={14} blur={2.2} far={5}/>
-        <Environment preset="city"/>
+        <ContactShadows position={[0,-3.5,0]} opacity={0.6} scale={16} blur={2.6} resolution={1024} far={5}/>
+        <Environment preset="studio"/>
       </Suspense>
       <OrbitControls enablePan={false} minDistance={3} maxDistance={14} enableDamping dampingFactor={0.08}/>
     </Canvas>
