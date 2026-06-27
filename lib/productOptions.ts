@@ -29,6 +29,12 @@ export const METALS: Record<string, MetalSpec> = {
   titanium:    { color: "#8A8A86", metalness: 0.90, roughness: 0.30 },
   copper:      { color: "#B87333", metalness: 1,    roughness: 0.24 },
   bronze:      { color: "#CD7F32", metalness: 1,    roughness: 0.28 },
+  "white-gold":{ color: "#E8E8E0", metalness: 1,    roughness: 0.14 },
+  champagne:   { color: "#E6CBA8", metalness: 1,    roughness: 0.18 },
+  chrome:      { color: "#DDE2E6", metalness: 1,    roughness: 0.08 },
+  graphite:    { color: "#3A3F44", metalness: 0.95, roughness: 0.38 },
+  pewter:      { color: "#8E8E8E", metalness: 0.90, roughness: 0.34 },
+  brass:       { color: "#C9A227", metalness: 1,    roughness: 0.26 },
 };
 
 // Non-metal frame / shell materials (acetate, plastic, wood…)
@@ -57,6 +63,7 @@ export const FABRICS: Record<string, FabricSpec> = {
   nylon:     { roughness: 0.45, clearcoat: 0.35, sheen: 0.3 },
   patent:    { roughness: 0.08, clearcoat: 1.0,  sheen: 0.0 },
   mesh:      { roughness: 0.70, clearcoat: 0.1,  sheen: 0.0 },
+  knit:      { roughness: 0.72, clearcoat: 0.05, sheen: 0.15 },
   georgette: { roughness: 0.40, clearcoat: 0.3,  sheen: 0.5 },
   chiffon:   { roughness: 0.35, clearcoat: 0.3,  sheen: 0.55 },
   corduroy:  { roughness: 0.88, clearcoat: 0.0,  sheen: 0.25 },
@@ -68,6 +75,14 @@ export const FABRICS: Record<string, FabricSpec> = {
   net:       { roughness: 0.60, clearcoat: 0.1,  sheen: 0.25 },
   khadi:     { roughness: 0.95, clearcoat: 0.0,  sheen: 0.0 },
   cashmere:  { roughness: 0.88, clearcoat: 0.0,  sheen: 0.2 },
+  twill:     { roughness: 0.80, clearcoat: 0.05, sheen: 0.05 },
+  tweed:     { roughness: 0.92, clearcoat: 0.0,  sheen: 0.1 },
+  ripstop:   { roughness: 0.50, clearcoat: 0.30, sheen: 0.2 },
+  terry:     { roughness: 0.95, clearcoat: 0.0,  sheen: 0.0 },
+  flannel:   { roughness: 0.90, clearcoat: 0.0,  sheen: 0.1 },
+  sherpa:    { roughness: 0.97, clearcoat: 0.0,  sheen: 0.0 },
+  gabardine: { roughness: 0.70, clearcoat: 0.1,  sheen: 0.1 },
+  modal:     { roughness: 0.55, clearcoat: 0.15, sheen: 0.3 },
 };
 
 export interface GemSpec { color: string; transmission: number; roughness: number; metalness: number }
@@ -82,10 +97,19 @@ export const GEMS: Record<string, GemSpec> = {
   citrine:    { color: "#E4A010", transmission: 0.64, roughness: 0.03, metalness: 0.0 },
   pearl:      { color: "#F8F0E3", transmission: 0.0,  roughness: 0.18, metalness: 0.2 },
   onyx:       { color: "#0A0A0A", transmission: 0.0,  roughness: 0.10, metalness: 0.3 },
+  garnet:     { color: "#7B1F2B", transmission: 0.55, roughness: 0.03, metalness: 0.0 },
+  peridot:    { color: "#9DC209", transmission: 0.66, roughness: 0.03, metalness: 0.0 },
+  tanzanite:  { color: "#4661B8", transmission: 0.60, roughness: 0.03, metalness: 0.0 },
+  opal:       { color: "#D8E7E0", transmission: 0.40, roughness: 0.12, metalness: 0.15 },
+  turquoise:  { color: "#3AB0A2", transmission: 0.0,  roughness: 0.20, metalness: 0.1 },
+  morganite:  { color: "#E6B7B0", transmission: 0.68, roughness: 0.03, metalness: 0.0 },
+  jade:       { color: "#3E9B6E", transmission: 0.25, roughness: 0.18, metalness: 0.0 },
+  moonstone:  { color: "#DDE6EC", transmission: 0.50, roughness: 0.10, metalness: 0.1 },
+  "black-diamond": { color: "#1B1B1F", transmission: 0.20, roughness: 0.02, metalness: 0.2 },
 };
 
 // Gem cuts → maps to a geometry choice in the viewer
-export const GEM_CUTS = ["round", "princess", "emerald-cut", "marquise", "oval"] as const;
+export const GEM_CUTS = ["round", "princess", "emerald-cut", "marquise", "oval", "pear", "heart", "cushion", "radiant", "trillion", "baguette", "asscher"] as const;
 
 // Eyewear lens types
 export interface LensSpec { transmission: number; metalness: number; roughness: number; mix: number }
@@ -99,6 +123,7 @@ export const LENS_TYPES: Record<string, LensSpec> = {
 export const LENS_COLORS: Record<string, string> = {
   black:  "#15161A", smoke: "#3A3D44", brown: "#5A3A1E", green: "#1E3D2E",
   blue:   "#1C3A66", rose:  "#C98A9B", gold:  "#C9A227", purple: "#4A2A66", silver: "#C7CBD1",
+  red:    "#7A2222", orange: "#B5651D", yellow: "#B59A1D", teal:   "#1E5A5A", ice:    "#9FC9DA",
 };
 
 // ── chip builders ──
@@ -116,6 +141,29 @@ const LENS_COLOR_CHOICES: OptionChoice[] = [
   C("brown", "Brown", LENS_COLORS.brown), C("green", "Green", LENS_COLORS.green),
   C("blue", "Blue", LENS_COLORS.blue), C("rose", "Rose", LENS_COLORS.rose),
   C("gold", "Gold", LENS_COLORS.gold), C("purple", "Purple", LENS_COLORS.purple),
+  C("silver", "Silver", LENS_COLORS.silver), C("red", "Red", LENS_COLORS.red),
+  C("orange", "Orange", LENS_COLORS.orange), C("yellow", "Yellow", LENS_COLORS.yellow),
+  C("teal", "Teal", LENS_COLORS.teal), C("ice", "Ice", LENS_COLORS.ice),
+];
+
+// Reusable broad choice lists (all wired through METALS / GEMS / gemCutGeometry)
+const METAL_CHOICES: OptionChoice[] = [
+  M("gold","Gold"),M("silver","Silver"),M("rose-gold","Rose Gold"),M("white-gold","White Gold"),
+  M("platinum","Platinum"),M("gunmetal","Gunmetal"),M("black","Black"),M("titanium","Titanium"),
+  M("copper","Copper"),M("bronze","Bronze"),M("brass","Brass"),M("champagne","Champagne"),
+  M("chrome","Chrome"),M("graphite","Graphite"),M("pewter","Pewter"),
+];
+const GEM_CHOICES: OptionChoice[] = [
+  G("diamond","Diamond"),G("ruby","Ruby"),G("emerald","Emerald"),G("sapphire","Sapphire"),
+  G("amethyst","Amethyst"),G("topaz","Topaz"),G("aquamarine","Aquamarine"),G("citrine","Citrine"),
+  G("pearl","Pearl"),G("onyx","Onyx"),G("garnet","Garnet"),G("peridot","Peridot"),
+  G("tanzanite","Tanzanite"),G("opal","Opal"),G("turquoise","Turquoise"),G("morganite","Morganite"),
+  G("jade","Jade"),G("moonstone","Moonstone"),G("black-diamond","Black Diamond"),
+];
+const CUT_CHOICES: OptionChoice[] = [
+  F("round","Round"),F("princess","Princess"),F("emerald-cut","Emerald"),F("marquise","Marquise"),
+  F("oval","Oval"),F("pear","Pear"),F("heart","Heart"),F("cushion","Cushion"),
+  F("radiant","Radiant"),F("trillion","Trillion"),F("baguette","Baguette"),F("asscher","Asscher"),
 ];
 
 // ──────────────────────────────────────────────────────────────
@@ -124,48 +172,50 @@ const LENS_COLOR_CHOICES: OptionChoice[] = [
 export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
   // ── TOPS ──
   tshirt: [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["jersey","Jersey"],["linen","Linen"],["silk","Silk"],["velvet","Velvet"]]),
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["jersey","Jersey"],["linen","Linen"],["modal","Modal"],["silk","Silk"],["satin","Satin"],["velvet","Velvet"],["terry","Terry"]]),
     { id: "neck", label: "Neckline", default: "crew", choices: [F("crew","Crew"),F("vneck","V-Neck"),F("scoop","Scoop")] },
     { id: "sleeve", label: "Sleeve", default: "short", choices: [F("short","Short"),F("long","Long"),F("sleeveless","Sleeveless")] },
   ],
   shirt: [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["linen","Linen"],["silk","Silk"],["satin","Satin"],["denim","Denim"]]),
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["linen","Linen"],["silk","Silk"],["satin","Satin"],["denim","Denim"],["twill","Twill"],["flannel","Flannel"],["corduroy","Corduroy"]]),
     { id: "collar", label: "Collar", default: "classic", choices: [F("classic","Classic"),F("button-down","Button-Down"),F("mandarin","Mandarin")] },
     { id: "fit", label: "Fit", default: "regular", choices: [F("regular","Regular"),F("slim","Slim"),F("oversized","Oversized")] },
   ],
   polo: [
-    FABRIC_OPT("jersey", [["jersey","Pique"],["cotton","Cotton"],["silk","Silk"]]),
+    FABRIC_OPT("jersey", [["jersey","Pique"],["cotton","Cotton"],["modal","Modal"],["linen","Linen"],["silk","Silk"]]),
     { id: "collar", label: "Collar", default: "ribbed", choices: [F("ribbed","Ribbed"),F("flat","Flat")] },
   ],
   hoodie: [
-    FABRIC_OPT("fleece", [["fleece","Fleece"],["cotton","Cotton"],["velvet","Velvet"]]),
+    FABRIC_OPT("fleece", [["fleece","Fleece"],["cotton","Cotton"],["terry","Terry"],["sherpa","Sherpa"],["jersey","Jersey"],["velvet","Velvet"]]),
     { id: "closure", label: "Closure", default: "pullover", choices: [F("pullover","Pullover"),F("zip","Full-Zip")] },
     { id: "pocket", label: "Pocket", default: "kangaroo", choices: [F("kangaroo","Kangaroo"),F("split","Split"),F("none","None")] },
   ],
   jacket: [
-    FABRIC_OPT("leather", [["leather","Leather"],["denim","Denim"],["nylon","Nylon"],["wool","Wool"],["suede","Suede"]]),
-    { id: "hardware", label: "Hardware", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("gunmetal","Gunmetal"),M("black","Black")] },
+    FABRIC_OPT("leather", [["leather","Leather"],["denim","Denim"],["nylon","Nylon"],["wool","Wool"],["suede","Suede"],["gabardine","Gabardine"],["tweed","Tweed"],["corduroy","Corduroy"]]),
+    { id: "hardware", label: "Hardware", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("gunmetal","Gunmetal"),M("black","Black"),M("bronze","Bronze"),M("brass","Brass"),M("chrome","Chrome")] },
   ],
   bomber: [
-    FABRIC_OPT("nylon", [["nylon","Nylon"],["satin","Satin"],["wool","Wool"],["leather","Leather"]]),
-    { id: "hardware", label: "Zip Metal", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("gunmetal","Gunmetal")] },
+    FABRIC_OPT("nylon", [["nylon","Nylon"],["satin","Satin"],["wool","Wool"],["leather","Leather"],["ripstop","Ripstop"],["suede","Suede"]]),
+    { id: "hardware", label: "Zip Metal", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("gunmetal","Gunmetal"),M("black","Black"),M("bronze","Bronze"),M("brass","Brass")] },
   ],
 
   // ── BOTTOMS ──
   shorts: [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["nylon","Nylon"],["denim","Denim"],["fleece","Fleece"]]),
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["nylon","Nylon"],["denim","Denim"],["fleece","Fleece"],["twill","Twill"],["ripstop","Ripstop"],["linen","Linen"],["terry","Terry"]]),
     { id: "length", label: "Length", default: "mid", choices: [F("short","Short"),F("mid","Mid"),F("long","Long")] },
   ],
   joggers: [
-    FABRIC_OPT("fleece", [["fleece","Fleece"],["cotton","Cotton"],["nylon","Nylon"]]),
+    FABRIC_OPT("fleece", [["fleece","Fleece"],["cotton","Cotton"],["terry","Terry"],["modal","Modal"],["nylon","Nylon"],["sherpa","Sherpa"]]),
     { id: "cuff", label: "Cuff", default: "elastic", choices: [F("elastic","Elastic"),F("open","Open")] },
   ],
   jeans: [
     { id: "wash", label: "Wash", default: "indigo", choices: [
       C("indigo","Indigo","#2A4A7A"),C("light","Light","#7C9CC4"),C("black","Black","#1A1A1A"),
-      C("grey","Grey","#6A6A6A"),C("acid","Acid Wash","#A8B8CC") ] },
+      C("grey","Grey","#6A6A6A"),C("acid","Acid Wash","#A8B8CC"),C("stone","Stone","#9AA0A6"),
+      C("vintage","Vintage","#5C6E86"),C("jet","Jet","#0E0E10") ] },
     { id: "stitch", label: "Stitch", default: "gold", choices: [
-      C("gold","Gold","#D4A853"),C("white","White","#EDEDED"),C("tonal","Tonal","#3A3A3A") ] },
+      C("gold","Gold","#D4A853"),C("white","White","#EDEDED"),C("tonal","Tonal","#3A3A3A"),
+      C("red","Red","#9A3A3A"),C("blue","Blue","#2A4A7A"),C("cream","Cream","#E9E0C8") ] },
     { id: "fit", label: "Fit", default: "regular", choices: [F("skinny","Skinny"),F("regular","Regular"),F("baggy","Baggy")] },
   ],
 
@@ -242,112 +292,120 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
   // ── FOOTWEAR ──
   "sneaker-low": [
     { id: "material", label: "Upper", default: "leather", choices: [
-      F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("mesh","Mesh"),F("patent","Patent") ] },
+      F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("mesh","Mesh"),F("patent","Patent"),F("nylon","Nylon"),F("knit","Knit"),F("corduroy","Corduroy") ] },
     { id: "toe", label: "Toe Box", default: "cap", choices: [
       F("cap","Rubber Cap"),F("perf","Perforated"),F("plain","Plain") ] },
     { id: "sole", label: "Sole Color", default: "white", choices: [
-      C("white","White","#F2F2F2"),C("gum","Gum","#C9A26A"),C("black","Black","#1C1C1C"),C("cream","Cream","#EBE3D0") ] },
+      C("white","White","#F2F2F2"),C("gum","Gum","#C9A26A"),C("black","Black","#1C1C1C"),C("cream","Cream","#EBE3D0"),
+      C("ice","Ice","#DCE6EC"),C("navy","Navy","#1E2A44"),C("red","Red","#7A2222"),C("tan","Tan","#B98A5E") ] },
     { id: "lace", label: "Laces", default: "white", choices: [
-      C("white","White","#FFFFFF"),C("black","Black","#1A1A1A"),C("accent","Accent","#FFD700"),C("none","No Laces","#777") ] },
+      C("white","White","#FFFFFF"),C("black","Black","#1A1A1A"),C("accent","Accent","#FFD700"),
+      C("red","Red","#7A2222"),C("blue","Blue","#1C3A66"),C("gum","Gum","#C9A26A"),C("none","No Laces","#777") ] },
   ],
   "sneaker-high": [
     { id: "material", label: "Upper", default: "leather", choices: [
-      F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("patent","Patent") ] },
+      F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("patent","Patent"),F("nylon","Nylon"),F("corduroy","Corduroy") ] },
     { id: "toe", label: "Toe Box", default: "cap", choices: [
       F("cap","Rubber Cap"),F("perf","Perforated"),F("plain","Plain") ] },
     { id: "sole", label: "Sole Color", default: "white", choices: [
-      C("white","White","#F2F2F2"),C("gum","Gum","#C9A26A"),C("black","Black","#1C1C1C") ] },
+      C("white","White","#F2F2F2"),C("gum","Gum","#C9A26A"),C("black","Black","#1C1C1C"),C("cream","Cream","#EBE3D0"),C("ice","Ice","#DCE6EC"),C("red","Red","#7A2222") ] },
     { id: "lace", label: "Laces", default: "white", choices: [
-      C("white","White","#FFFFFF"),C("black","Black","#1A1A1A"),C("accent","Accent","#FFD700") ] },
+      C("white","White","#FFFFFF"),C("black","Black","#1A1A1A"),C("accent","Accent","#FFD700"),C("red","Red","#7A2222"),C("blue","Blue","#1C3A66") ] },
   ],
   boot: [
     { id: "material", label: "Material", default: "leather", choices: [
-      F("leather","Leather"),F("suede","Suede"),F("patent","Patent") ] },
+      F("leather","Leather"),F("suede","Suede"),F("patent","Patent"),F("canvas","Canvas"),F("nylon","Nylon") ] },
     { id: "sole", label: "Sole", default: "black", choices: [
-      C("black","Black","#1C1C1C"),C("gum","Gum","#C9A26A"),C("white","White","#F2F2F2") ] },
-    { id: "hardware", label: "Eyelets", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("gunmetal","Gunmetal")] },
+      C("black","Black","#1C1C1C"),C("gum","Gum","#C9A26A"),C("white","White","#F2F2F2"),C("tan","Tan","#B98A5E") ] },
+    { id: "hardware", label: "Eyelets", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("gunmetal","Gunmetal"),M("black","Black"),M("bronze","Bronze"),M("brass","Brass")] },
   ],
   sandal: [
-    { id: "material", label: "Strap", default: "leather", choices: [F("leather","Leather"),F("suede","Suede"),F("nylon","Nylon")] },
-    { id: "hardware", label: "Buckle", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("bronze","Bronze")] },
+    { id: "material", label: "Strap", default: "leather", choices: [F("leather","Leather"),F("suede","Suede"),F("nylon","Nylon"),F("canvas","Canvas"),F("patent","Patent")] },
+    { id: "hardware", label: "Buckle", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("bronze","Bronze"),M("gunmetal","Gunmetal"),M("rose-gold","Rose Gold"),M("brass","Brass")] },
   ],
   "slip-on": [
-    { id: "material", label: "Upper", default: "canvas", choices: [F("canvas","Canvas"),F("leather","Leather"),F("suede","Suede"),F("velvet","Velvet")] },
-    { id: "sole", label: "Sole", default: "white", choices: [C("white","White","#F2F2F2"),C("gum","Gum","#C9A26A"),C("black","Black","#1C1C1C")] },
+    { id: "material", label: "Upper", default: "canvas", choices: [F("canvas","Canvas"),F("leather","Leather"),F("suede","Suede"),F("velvet","Velvet"),F("corduroy","Corduroy"),F("denim","Denim")] },
+    { id: "sole", label: "Sole", default: "white", choices: [C("white","White","#F2F2F2"),C("gum","Gum","#C9A26A"),C("black","Black","#1C1C1C"),C("cream","Cream","#EBE3D0")] },
   ],
 
   // ── HATS ──
   cap: [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["denim","Denim"],["wool","Wool"],["mesh","Trucker Mesh"]]),
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["denim","Denim"],["wool","Wool"],["mesh","Trucker Mesh"],["canvas","Canvas"],["corduroy","Corduroy"],["nylon","Nylon"],["twill","Twill"],["suede","Suede"]]),
     { id: "brim", label: "Brim", default: "curved", choices: [F("curved","Curved"),F("flat","Flat")] },
-    { id: "button", label: "Top Button", default: "accent", choices: [M("gold","Gold"),M("silver","Silver"),C("accent","Match Accent")] },
+    { id: "button", label: "Top Button", default: "accent", choices: [M("gold","Gold"),M("silver","Silver"),M("black","Black"),M("gunmetal","Gunmetal"),M("bronze","Bronze"),C("accent","Match Accent")] },
   ],
   beanie: [
-    FABRIC_OPT("wool", [["wool","Wool Knit"],["fleece","Fleece"],["cotton","Cotton"]]),
+    FABRIC_OPT("wool", [["wool","Wool Knit"],["fleece","Fleece"],["cotton","Cotton"],["knit","Ribbed Knit"],["cashmere","Cashmere"],["sherpa","Sherpa"],["terry","Terry"]]),
+    { id: "cuff", label: "Cuff", default: "folded", choices: [F("folded","Folded"),F("slouch","Slouch"),F("tight","Tight")] },
     { id: "pom", label: "Pom-Pom", default: "yes", choices: [F("yes","With Pom"),F("no","No Pom")] },
   ],
   "bucket-hat": [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["denim","Denim"],["nylon","Nylon"],["corduroy","Corduroy"]]),
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["denim","Denim"],["nylon","Nylon"],["corduroy","Corduroy"],["canvas","Canvas"],["twill","Twill"],["terry","Terry"],["suede","Suede"]]),
+    { id: "brim", label: "Brim", default: "medium", choices: [F("short","Short"),F("medium","Medium"),F("wide","Wide")] },
   ],
 
   // ── BAGS ──
   backpack: [
-    { id: "material", label: "Material", default: "nylon", choices: [F("nylon","Nylon"),F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede")] },
-    { id: "hardware", label: "Hardware", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("gunmetal","Gunmetal"),M("black","Black")] },
+    { id: "material", label: "Material", default: "nylon", choices: [F("nylon","Nylon"),F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("ripstop","Ripstop"),F("denim","Denim"),F("mesh","Mesh"),F("knit","Knit")] },
+    { id: "hardware", label: "Hardware", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("gunmetal","Gunmetal"),M("black","Black"),M("bronze","Bronze"),M("brass","Brass"),M("chrome","Chrome"),M("titanium","Titanium")] },
   ],
   tote: [
-    { id: "material", label: "Material", default: "canvas", choices: [F("canvas","Canvas"),F("leather","Leather"),F("denim","Denim"),F("nylon","Nylon")] },
-    { id: "handle", label: "Handle", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),C("tonal","Tonal","#8a6d3b")] },
+    { id: "material", label: "Material", default: "canvas", choices: [F("canvas","Canvas"),F("leather","Leather"),F("denim","Denim"),F("nylon","Nylon"),F("corduroy","Corduroy"),F("suede","Suede"),F("twill","Twill")] },
+    { id: "handle", label: "Handle", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("black","Black"),M("gunmetal","Gunmetal"),M("bronze","Bronze"),M("brass","Brass"),C("tonal","Tonal","#8a6d3b")] },
   ],
 
   // ── ACCESSORIES ──
   watch: [
-    { id: "caseMetal", label: "Case Metal", default: "silver", choices: [
-      M("silver","Silver"),M("gold","Gold"),M("rose-gold","Rose Gold"),M("gunmetal","Gunmetal"),M("black","Black"),M("titanium","Titanium") ] },
+    { id: "caseMetal", label: "Case Metal", default: "silver", choices: METAL_CHOICES },
     { id: "strap", label: "Strap", default: "leather", choices: [
-      F("leather","Leather"),F("steel","Steel"),F("nylon","NATO"),F("rubber","Rubber") ] },
+      F("leather","Leather"),F("steel","Steel"),F("nylon","NATO"),F("rubber","Rubber"),F("suede","Suede"),F("canvas","Canvas") ] },
     { id: "dial", label: "Dial", default: "sunburst", choices: [
-      F("sunburst","Sunburst"),F("matte","Matte"),F("skeleton","Skeleton") ] },
+      F("sunburst","Sunburst"),F("matte","Matte"),F("carbon","Carbon"),F("skeleton","Skeleton") ] },
     { id: "markers", label: "Markers", default: "index", choices: [
-      F("index","Index Bars"),F("roman","Roman"),F("dot","Dots"),F("none","Minimal") ] },
+      F("index","Index Bars"),F("baton","Baton"),F("roman","Roman"),F("arabic","Arabic"),F("dot","Dots"),F("none","Minimal") ] },
     { id: "glass", label: "Crystal Tint", default: "clear", choices: [
-      C("clear","Clear","#cfe8ff"),C("blue","Blue","#3a7bd5"),C("smoke","Smoke","#555") ] },
+      C("clear","Clear","#cfe8ff"),C("blue","Blue","#3a7bd5"),C("green","Green","#2E7D5B"),
+      C("purple","Purple","#6A4AA0"),C("rose","Rose","#C98A9B"),C("smoke","Smoke","#555") ] },
   ],
   sunglasses: [
     { id: "frame", label: "Frame Material", default: "silver", choices: [
-      M("silver","Silver"),M("gold","Gold"),M("gunmetal","Gunmetal"),M("titanium","Titanium"),
-      S("acetate","Acetate"),S("tortoise","Tortoise"),S("matte","Matte Black") ] },
+      M("silver","Silver"),M("gold","Gold"),M("rose-gold","Rose Gold"),M("gunmetal","Gunmetal"),
+      M("black","Black"),M("titanium","Titanium"),M("bronze","Bronze"),M("chrome","Chrome"),
+      S("acetate","Acetate"),S("tortoise","Tortoise"),S("matte","Matte Black"),S("wood","Wood") ] },
     { id: "lensType", label: "Lens Type", default: "tinted", choices: [
       F("tinted","Tinted"),F("gradient","Gradient"),F("mirror","Mirror"),F("polarized","Polarized"),F("clear","Clear") ] },
     { id: "lensColor", label: "Lens Color", default: "smoke", choices: LENS_COLOR_CHOICES },
     { id: "shape", label: "Shape", default: "round", choices: [
-      F("round","Round"),F("square","Square"),F("aviator","Aviator"),F("cat-eye","Cat-Eye") ] },
+      F("round","Round"),F("square","Square"),F("aviator","Aviator"),F("cat-eye","Cat-Eye"),
+      F("oversized","Oversized"),F("hexagon","Hexagon") ] },
   ],
   belt: [
-    FABRIC_OPT("leather", [["leather","Leather"],["suede","Suede"],["patent","Patent"]]),
-    { id: "buckle", label: "Buckle Metal", default: "gold", choices: [
-      M("gold","Gold"),M("silver","Silver"),M("gunmetal","Gunmetal"),M("black","Black"),M("bronze","Bronze") ] },
-    { id: "buckleStyle", label: "Buckle Style", default: "frame", choices: [F("frame","Frame"),F("plate","Plate"),F("ring","Ring")] },
+    FABRIC_OPT("leather", [["leather","Leather"],["suede","Suede"],["patent","Patent"],["canvas","Canvas"],["nylon","Woven"],["denim","Denim"]]),
+    { id: "buckle", label: "Buckle Metal", default: "gold", choices: METAL_CHOICES },
+    { id: "buckleStyle", label: "Buckle Style", default: "frame", choices: [
+      F("frame","Frame"),F("plate","Plate"),F("ring","Ring"),F("double-ring","Double Ring"),F("western","Western") ] },
   ],
   chain: [
-    { id: "metal", label: "Metal", default: "gold", choices: [
-      M("gold","Gold"),M("silver","Silver"),M("rose-gold","Rose Gold"),M("gunmetal","Gunmetal"),M("platinum","Platinum") ] },
+    { id: "metal", label: "Metal", default: "gold", choices: METAL_CHOICES },
     { id: "link", label: "Link Style", default: "round", choices: [
-      F("round","Round"),F("cuban","Cuban"),F("box","Box"),F("rope","Rope") ] },
+      F("round","Round"),F("cuban","Cuban"),F("box","Box"),F("rope","Rope"),
+      F("snake","Snake"),F("figaro","Figaro"),F("mariner","Mariner") ] },
     { id: "pendant", label: "Pendant", default: "tag", choices: [
-      F("tag","Tag"),F("cross","Cross"),F("gem","Gem"),F("none","None") ] },
+      F("tag","Tag"),F("cross","Cross"),F("gem","Gem"),F("heart","Heart"),
+      F("star","Star"),F("coin","Coin"),F("none","None") ] },
   ],
   wallet: [
-    FABRIC_OPT("leather", [["leather","Leather"],["suede","Suede"],["patent","Patent"],["nylon","Nylon"]]),
+    FABRIC_OPT("leather", [["leather","Leather"],["suede","Suede"],["patent","Patent"],["nylon","Nylon"],["canvas","Canvas"],["denim","Denim"]]),
     { id: "stitch", label: "Stitch", default: "accent", choices: [
-      C("accent","Accent"),C("white","White","#EDEDED"),C("tonal","Tonal","#3A3A3A") ] },
+      C("accent","Accent"),C("white","White","#EDEDED"),C("tonal","Tonal","#3A3A3A"),
+      C("gold","Gold","#D4A853"),C("red","Red","#9A3A3A"),C("blue","Blue","#2A4A7A"),C("cream","Cream","#E9E0C8") ] },
   ],
   scarf: [
-    FABRIC_OPT("wool", [["wool","Wool"],["silk","Silk"],["cashmere","Cashmere"],["chiffon","Chiffon"]]),
+    FABRIC_OPT("wool", [["wool","Wool"],["silk","Silk"],["cashmere","Cashmere"],["chiffon","Chiffon"],["modal","Modal"],["linen","Linen"],["velvet","Velvet"],["jacquard","Jacquard"],["khadi","Khadi"]]),
     { id: "fringe", label: "Fringe", default: "yes", choices: [F("yes","Fringed"),F("no","Clean Edge")] },
   ],
   socks: [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["wool","Wool"],["mesh","Athletic"]]),
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["wool","Wool"],["mesh","Athletic"],["terry","Terry"],["modal","Modal"],["jersey","Jersey"]]),
     { id: "length", label: "Length", default: "crew", choices: [F("ankle","Ankle"),F("crew","Crew"),F("knee","Knee-High")] },
   ],
   "phone-case": [
@@ -358,24 +416,26 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
       F("pixel-8-pro","Pixel 8 Pro"),F("oneplus-12","OnePlus 12") ] },
     { id: "material", label: "Material", default: "patent", choices: [
       F("patent","Glossy"),F("matte","Matte"),F("leather","Leather"),F("silicone","Silicone") ] },
-    { id: "lens", label: "Camera Ring", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("black","Black")] },
+    { id: "lens", label: "Camera Ring", default: "silver", choices: [
+      M("silver","Silver"),M("gold","Gold"),M("black","Black"),M("gunmetal","Gunmetal"),
+      M("graphite","Graphite"),M("titanium","Titanium"),M("rose-gold","Rose Gold"),M("chrome","Chrome"),M("bronze","Bronze") ] },
   ],
   ring: [
-    { id: "metal", label: "Band Metal", default: "gold", choices: [
-      M("gold","Gold"),M("silver","Silver"),M("rose-gold","Rose Gold"),M("platinum","Platinum"),M("black","Black") ] },
-    { id: "gem", label: "Gemstone", default: "diamond", choices: [
-      G("diamond","Diamond"),G("ruby","Ruby"),G("emerald","Emerald"),G("sapphire","Sapphire"),
-      G("amethyst","Amethyst"),G("topaz","Topaz"),G("onyx","Onyx") ] },
-    { id: "cut", label: "Cut", default: "round", choices: [
-      F("round","Round"),F("princess","Princess"),F("emerald-cut","Emerald"),F("marquise","Marquise"),F("oval","Oval") ] },
+    { id: "metal", label: "Band Metal", default: "gold", choices: METAL_CHOICES },
+    { id: "gem", label: "Gemstone", default: "diamond", choices: GEM_CHOICES },
+    { id: "cut", label: "Cut", default: "round", choices: CUT_CHOICES },
   ],
   earrings: [
-    { id: "metal", label: "Metal", default: "gold", choices: [
-      M("gold","Gold"),M("silver","Silver"),M("rose-gold","Rose Gold"),M("platinum","Platinum") ] },
-    { id: "gem", label: "Gemstone", default: "diamond", choices: [
-      G("diamond","Diamond"),G("ruby","Ruby"),G("emerald","Emerald"),G("sapphire","Sapphire"),G("pearl","Pearl") ] },
+    { id: "metal", label: "Metal", default: "gold", choices: METAL_CHOICES },
+    { id: "gem", label: "Gemstone", default: "diamond", choices: GEM_CHOICES },
     { id: "style", label: "Style", default: "drop", choices: [
-      F("hoop","Hoop"),F("stud","Stud"),F("drop","Drop") ] },
+      F("stud","Stud"),F("hoop","Hoop"),F("huggie","Huggie"),F("drop","Drop"),
+      F("teardrop","Teardrop"),F("chandelier","Chandelier"),F("threader","Threader"),
+      F("ear-cuff","Ear Cuff"),F("jhumka","Jhumka"),F("cluster","Cluster"),
+      F("bar","Bar"),F("star","Star") ] },
+    { id: "cut", label: "Stone Cut", default: "round", choices: CUT_CHOICES },
+    { id: "size", label: "Size", default: "medium", choices: [
+      F("small","Small"),F("medium","Medium"),F("large","Large"),F("statement","Statement") ] },
   ],
 };
 

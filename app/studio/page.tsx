@@ -279,9 +279,14 @@ export default function StudioPage() {
   });
   const [options, setOptions] = useState<Record<string, string>>(() => defaultOptions("tshirt"));
   const [printImage, setPrintImage] = useState<{ src: string; x: number; y: number; scale: number; opacity: number } | null>(null);
+  const [bodyMode, setBodyMode] = useState<"none" | "male" | "female">("none");
 
   const productLabel = PRODUCTS.find(p => p.type === product)?.label ?? "";
+  const productCategory = PRODUCTS.find(p => p.type === product)?.category ?? "";
+  const productAudience = PRODUCTS.find(p => p.type === product)?.audience;
   const canPrint = PRINTABLE.has(product);
+  // Clothing categories that can be previewed on a 3D human model
+  const canWear = ["Tops", "Bottoms", "Traditional"].includes(productCategory);
 
   // Unisex = show all. Men hides women-only items; Women hides men-only items.
   const matchesGender = (a?: Audience) =>
@@ -342,6 +347,9 @@ export default function StudioPage() {
     setProduct(type);
     setOptions(defaultOptions(type));
     if (THREE_D_ONLY.has(type)) setView3D(true);
+    // The "on model" preview only applies to clothing — clear it for accessories/shoes/etc.
+    const nextCategory = PRODUCTS.find(p => p.type === type)?.category ?? "";
+    if (!["Tops", "Bottoms", "Traditional"].includes(nextCategory)) setBodyMode("none");
   };
 
   const handlePrintUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -701,11 +709,33 @@ export default function StudioPage() {
             </div>
           </div>
 
+          {/* ── Separate section: preview the garment worn on a 3D human model ── */}
+          {view3D && canWear && (
+            <div className="flex items-center justify-center gap-2 px-6 pt-2">
+              <span className="text-[10px] text-white/35 uppercase tracking-widest mr-1">Show on Model</span>
+              {([
+                { id: "none", label: "Flat" },
+                { id: "male", label: "Man" },
+                { id: "female", label: "Woman" },
+              ] as const).map(b => (
+                <button key={b.id} onClick={() => setBodyMode(b.id)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition ${bodyMode === b.id ? "bg-white text-black" : "bg-white/10 text-white/55 hover:bg-white/15"}`}>
+                  {b.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex-1 flex items-center justify-center p-6">
             {view3D ? (
               <div className="w-full max-w-3xl" style={{ height: "min(640px, 72vh)" }}>
-                <Product3DViewer productType={product} colors={colors} pattern={pattern} options={options}/>
-                <p className="text-center text-white/25 text-[10px] mt-2">Drag to rotate · Scroll to zoom</p>
+                <Product3DViewer productType={product} colors={colors} pattern={pattern} options={options}
+                  showBody={canWear && bodyMode !== "none"} bodyGender={bodyMode === "female" ? "female" : "male"}/>
+                <p className="text-center text-white/25 text-[10px] mt-2">
+                  {canWear && bodyMode !== "none"
+                    ? `Worn on ${bodyMode === "female" ? "woman" : "man"} model · Drag to rotate`
+                    : "Drag to rotate · Scroll to zoom"}
+                </p>
               </div>
             ) : (
               <div id="product-canvas" className="w-full max-w-2xl">

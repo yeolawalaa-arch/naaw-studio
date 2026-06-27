@@ -414,18 +414,25 @@ function lensMaterial(type: string | undefined, colorId: string | undefined, fal
   });
 }
 
-const SOLE_COLORS: Record<string, string> = { white: "#F2F2F2", gum: "#C9A26A", black: "#1C1C1C", cream: "#EBE3D0" };
-const LACE_COLORS: Record<string, string> = { white: "#FFFFFF", black: "#1A1A1A", none: "#777777" };
-const WASH_COLORS: Record<string, string> = { indigo: "#2A4A7A", light: "#7C9CC4", black: "#1A1A1A", grey: "#6A6A6A", acid: "#A8B8CC" };
-const STITCH_COLORS: Record<string, string> = { gold: "#D4A853", white: "#EDEDED", tonal: "#3A3A3A" };
+const SOLE_COLORS: Record<string, string> = { white: "#F2F2F2", gum: "#C9A26A", black: "#1C1C1C", cream: "#EBE3D0", ice: "#DCE6EC", navy: "#1E2A44", red: "#7A2222", tan: "#B98A5E" };
+const LACE_COLORS: Record<string, string> = { white: "#FFFFFF", black: "#1A1A1A", none: "#777777", accent: "#FFD700", red: "#7A2222", blue: "#1C3A66", gum: "#C9A26A" };
+const WASH_COLORS: Record<string, string> = { indigo: "#2A4A7A", light: "#7C9CC4", black: "#1A1A1A", grey: "#6A6A6A", acid: "#A8B8CC", stone: "#9AA0A6", vintage: "#5C6E86", jet: "#0E0E10" };
+const STITCH_COLORS: Record<string, string> = { gold: "#D4A853", white: "#EDEDED", tonal: "#3A3A3A", red: "#9A3A3A", blue: "#2A4A7A", cream: "#E9E0C8" };
 
-// gemstone cut → geometry
+// gemstone cut → geometry (every cut yields a visibly distinct stone)
 function gemCutGeometry(cut: string | undefined, r: number): THREE.BufferGeometry {
   switch (cut) {
     case "princess":    return new THREE.BoxGeometry(r * 1.45, r * 1.1, r * 1.45);
     case "emerald-cut": return new THREE.BoxGeometry(r * 1.2, r * 0.85, r * 1.8);
     case "marquise":    { const g = new THREE.OctahedronGeometry(r, 0); g.scale(0.6, 1, 1.8); return g; }
     case "oval":        { const g = new THREE.SphereGeometry(r, 22, 16); g.scale(1, 0.72, 1.45); return g; }
+    case "pear":        { const g = new THREE.OctahedronGeometry(r, 0); g.scale(0.82, 1.7, 0.82); return g; }
+    case "heart":       { const g = new THREE.SphereGeometry(r, 22, 16); g.scale(1.32, 1.18, 0.62); return g; }
+    case "cushion":     { const g = new THREE.SphereGeometry(r, 20, 14); g.scale(1.3, 0.92, 1.3); return g; }
+    case "radiant":     return new THREE.BoxGeometry(r * 1.35, r * 1.0, r * 1.55);
+    case "trillion":    return new THREE.CylinderGeometry(r * 1.35, r * 1.35, r * 0.72, 3);
+    case "baguette":    return new THREE.BoxGeometry(r * 0.72, r * 0.5, r * 2.0);
+    case "asscher":     { const g = new THREE.BoxGeometry(r * 1.25, r * 1.0, r * 1.25); g.rotateY(Math.PI / 4); return g; }
     case "round":
     default:            return new THREE.IcosahedronGeometry(r, 0);
   }
@@ -943,17 +950,23 @@ function Beanie3D({ colors, pattern, options }: { colors: ProductColors; pattern
   const mat = useMat(colors, pattern, 0.9, 0, 0.1, finishOf(options));
   const acc = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.accent), roughness: 0.82 }), [colors.accent]);
   const pom = options?.pom !== "no";
+  const cuff = options?.cuff || "folded";
+  const domeScaleY = cuff === "slouch" ? 1.24 : cuff === "tight" ? 0.92 : 1.0;
+  const domeY = cuff === "slouch" ? 0.18 : 0;
+  const cuffH = cuff === "slouch" ? 0.36 : cuff === "tight" ? 0.2 : 0.42;
+  const cuffY = cuff === "tight" ? -0.7 : -0.78;
+  const pomY = 1.15 * domeScaleY + domeY;
   return (
     <group>
       {/* Main knit dome */}
-      <Sphere args={[1.12, 32, 32]} material={mat}/>
+      <Sphere args={[1.12, 32, 32]} scale={[1, domeScaleY, 1]} position={[0, domeY, 0]} material={mat}/>
       {/* Pom-pom */}
-      {pom && <Sphere args={[0.24, 16, 16]} position={[0, 1.15, 0]} material={acc}/>}
+      {pom && <Sphere args={[0.24, 16, 16]} position={[0, pomY, 0]} material={acc}/>}
       {/* Cuff fold */}
-      <Cylinder args={[1.15, 1.18, 0.42, 36]} position={[0,-0.78,0]} material={acc}/>
+      <Cylinder args={[1.15, 1.18, cuffH, 36]} position={[0, cuffY, 0]} material={acc}/>
       {/* Rib texture bands */}
       {[-0.55,-0.2,0.15,0.5,0.85].map((y,i) => (
-        <Torus key={i} args={[1.12, 0.025, 6, 36, Math.PI*2]} position={[0,y,0]} rotation={[Math.PI/2,0,0]} material={acc}/>
+        <Torus key={i} args={[1.12, 0.025, 6, 36, Math.PI*2]} position={[0, y * domeScaleY + domeY, 0]} rotation={[Math.PI/2,0,0]} material={acc}/>
       ))}
     </group>
   );
@@ -965,6 +978,9 @@ function Beanie3D({ colors, pattern, options }: { colors: ProductColors; pattern
 function BucketHat3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
   const mat = useMat(colors, pattern, 0.82, 0, 0.2, finishOf(options));
   const brim = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.82, clearcoat: 0.2 }), [colors.secondary]);
+  const brimSize = options?.brim || "medium";
+  const brimR = brimSize === "short" ? 1.18 : brimSize === "wide" ? 1.68 : 1.4;
+  const brimT = brimSize === "short" ? 0.18 : brimSize === "wide" ? 0.26 : 0.22;
   return (
     <group>
       {/* Crown */}
@@ -975,7 +991,7 @@ function BucketHat3D({ colors, pattern, options }: { colors: ProductColors; patt
       </mesh>
       {/* Floppy brim */}
       <mesh material={brim} position={[0,-0.22,0]} rotation={[-0.18,0,0]}>
-        <torusGeometry args={[1.4, 0.22, 12, 36, Math.PI*2]}/>
+        <torusGeometry args={[brimR, brimT, 12, 36, Math.PI*2]}/>
       </mesh>
       {/* Band detail */}
       <Torus args={[1.02, 0.06, 10, 36, Math.PI*2]} position={[0,-0.02,0]} rotation={[Math.PI/2,0,0]} material={brim}/>
@@ -1188,18 +1204,24 @@ function Tote3D({ colors, pattern, options }: { colors: ProductColors; pattern: 
 function Watch3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
   const o = options || {};
   const strapId = o.strap || "leather";
-  const strapFab: FabricSpec = strapId === "nylon" ? FABRICS.nylon : strapId === "rubber" ? { roughness: 0.55, clearcoat: 0.4, sheen: 0 } : FABRICS.leather;
+  const strapFab: FabricSpec =
+    strapId === "nylon"  ? FABRICS.nylon :
+    strapId === "rubber" ? { roughness: 0.55, clearcoat: 0.4, sheen: 0 } :
+    strapId === "suede"  ? FABRICS.suede :
+    strapId === "canvas" ? FABRICS.canvas :
+    FABRICS.leather;
   const bandFabricMat = useMat(colors, pattern, 0.62, 0, 0.4, strapFab);
   const caseMat = useMemo(() => metalMaterial(o.caseMetal, colors.accent), [o.caseMetal, colors.accent]);
   const bandMat = strapId === "steel" ? caseMat : bandFabricMat;
   const dialMat = useMemo(() => {
     const d = o.dial || "sunburst";
     if (d === "matte") return new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.7, metalness: 0.1 });
+    if (d === "carbon") return new THREE.MeshStandardMaterial({ color: new THREE.Color("#191B1E"), roughness: 0.45, metalness: 0.55 });
     if (d === "skeleton") return new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.1, metalness: 0.25, transmission: 0.5, thickness: 0.3 });
     return new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.08, metalness: 0.55, clearcoat: 0.9 });
   }, [o.dial, colors.secondary]);
   const glassMat = useMemo(() => {
-    const tint: Record<string, number> = { clear: 0xCFE8FF, blue: 0x3A7BD5, smoke: 0x555555 };
+    const tint: Record<string, number> = { clear: 0xCFE8FF, blue: 0x3A7BD5, smoke: 0x555555, green: 0x2E7D5B, purple: 0x6A4AA0, rose: 0xC98A9B };
     return new THREE.MeshPhysicalMaterial({ color: new THREE.Color(tint[o.glass || "clear"] ?? 0xCFE8FF), roughness: 0, metalness: 0, transmission: 0.85, thickness: 0.2 });
   }, [o.glass]);
   return (
@@ -1230,6 +1252,18 @@ function Watch3D({ colors, pattern, options }: { colors: ProductColors; pattern:
           if (m === "roman") return (
             <mesh key={i} position={[x, 0.22, z]} rotation={[0, Math.PI/2 - a, 0]} material={caseMat}><boxGeometry args={[0.04, 0.05, 0.22]}/></mesh>
           );
+          if (m === "baton") return (
+            <mesh key={i} position={[x, 0.22, z]} rotation={[0, Math.PI/2 - a, 0]} material={caseMat}><boxGeometry args={[0.05, 0.07, 0.26]}/></mesh>
+          );
+          if (m === "arabic") {
+            // bold bars at the cardinal hours, dots between — reads like a numbered dial
+            if (i % 3 === 0) return (
+              <mesh key={i} position={[x, 0.22, z]} rotation={[0, Math.PI/2 - a, 0]} material={caseMat}><boxGeometry args={[0.07, 0.07, 0.2]}/></mesh>
+            );
+            return (
+              <mesh key={i} position={[x, 0.22, z]} material={caseMat}><cylinderGeometry args={[0.045, 0.045, 0.05, 12]}/></mesh>
+            );
+          }
           // index bars
           return (
             <mesh key={i} position={[x, 0.22, z]} rotation={[0, Math.PI/2 - a, 0]} material={caseMat}><boxGeometry args={[0.06, 0.06, 0.15]}/></mesh>
@@ -1263,8 +1297,17 @@ function Sunglasses3D({ colors, pattern, options }: { colors: ProductColors; pat
         </group>
       );
     }
-    const sx = shape === "cat-eye" ? 1.05 : 1;
-    const sy = shape === "aviator" || shape === "cat-eye" ? 0.82 : 1;
+    if (shape === "hexagon") {
+      return (
+        <group key={x} position={[x, 0, 0]} rotation={[0,0,Math.PI/6]}>
+          <mesh rotation={[Math.PI/2,0,0]} material={lensMat}><cylinderGeometry args={[0.92,0.92,0.08,6]}/></mesh>
+          <mesh rotation={[Math.PI/2,0,0]} position={[0,0,-0.03]} material={frame}><cylinderGeometry args={[1.04,1.04,0.05,6]}/></mesh>
+        </group>
+      );
+    }
+    const over = shape === "oversized";
+    const sx = shape === "cat-eye" ? 1.05 : over ? 1.3 : 1;
+    const sy = shape === "aviator" || shape === "cat-eye" ? 0.82 : over ? 1.2 : 1;
     const rz = shape === "cat-eye" ? (x < 0 ? 0.18 : -0.18) : 0;
     const oy = shape === "aviator" ? -0.06 : 0;
     return (
@@ -1303,15 +1346,30 @@ function Belt3D({ colors, pattern, options }: { colors: ProductColors; pattern: 
       <Torus args={[2.25, 0.24, 14, 64, Math.PI*1.65]} position={[0,0,0]} material={mat}/>
       {/* Tail end */}
       <RoundedBox args={[0.5, 0.48, 0.1]} radius={0.06} position={[2.0,-0.9,0]} rotation={[0,0,0.6]} material={mat}/>
-      {/* Buckle — frame / plate / ring */}
-      {buckleStyle === "ring" ? (
-        <Torus args={[0.34, 0.08, 12, 28]} position={[-1.95,0.88,0]} rotation={[Math.PI/2,0,0]} material={buckle}/>
-      ) : buckleStyle === "plate" ? (
-        <RoundedBox args={[0.82, 0.66, 0.16]} radius={0.08} position={[-1.95,0.88,0]} material={buckle}/>
-      ) : (<>
-        <RoundedBox args={[0.68, 0.58, 0.2]} radius={0.06} position={[-1.95,0.88,0]} material={buckle}/>
-        <Torus args={[0.22, 0.055, 8, 20]} position={[-1.95,0.88,0]} rotation={[Math.PI/2,0,0]} material={buckle}/>
-      </>)}
+      {/* Buckle — frame / plate / ring / double-ring / western */}
+      {(() => {
+        const bx = -1.95, by = 0.88;
+        if (buckleStyle === "ring")
+          return <Torus args={[0.34, 0.08, 12, 28]} position={[bx,by,0]} rotation={[Math.PI/2,0,0]} material={buckle}/>;
+        if (buckleStyle === "double-ring")
+          return (<>
+            <Torus args={[0.26, 0.07, 12, 26]} position={[bx-0.16,by,0]} rotation={[Math.PI/2,0,0]} material={buckle}/>
+            <Torus args={[0.26, 0.07, 12, 26]} position={[bx+0.16,by,0]} rotation={[Math.PI/2,0,0]} material={buckle}/>
+          </>);
+        if (buckleStyle === "plate")
+          return <RoundedBox args={[0.82, 0.66, 0.16]} radius={0.08} position={[bx,by,0]} material={buckle}/>;
+        if (buckleStyle === "western")
+          return (<>
+            <RoundedBox args={[1.05, 0.78, 0.18]} radius={0.13} position={[bx,by,0]} material={buckle}/>
+            <Torus args={[0.3, 0.04, 10, 28]} position={[bx,by,0.1]} material={buckle}/>
+            <mesh position={[bx,by,0.15]} material={buckle}><octahedronGeometry args={[0.13,0]}/></mesh>
+          </>);
+        // frame (default)
+        return (<>
+          <RoundedBox args={[0.68, 0.58, 0.2]} radius={0.06} position={[bx,by,0]} material={buckle}/>
+          <Torus args={[0.22, 0.055, 8, 20]} position={[bx,by,0]} rotation={[Math.PI/2,0,0]} material={buckle}/>
+        </>);
+      })()}
       {/* Belt holes */}
       {[0.5, 0.9, 1.3].map((v,i) => (
         <mesh key={i} position={[2.0-v*0.5,-0.9+v*0.4,0.06]} rotation={[Math.PI/2,0,0.6]} material={buckle}>
@@ -1337,7 +1395,18 @@ function Chain3D({ colors, pattern, options }: { colors: ProductColors; pattern:
     const y = 2.0 - i*0.28; const x = Math.sin(i*0.52)*0.18; const rot = i%2===0 ? 0 : Math.PI/2;
     if (link === "box") return <RoundedBox key={i} args={[0.36,0.28,0.14]} radius={0.05} position={[x,y,0]} rotation={[0,rot,0]} material={chainMat}/>;
     if (link === "rope") return <Sphere key={i} args={[0.16,16,16]} position={[x,y,0]} material={chainMat}/>;
+    if (link === "snake") return <Sphere key={i} args={[0.13,16,16]} position={[x,y,0]} material={chainMat}/>;
     if (link === "cuban") return <group key={i} position={[x,y,0]} scale={[1.35,1,0.55]} rotation={[0,rot,0]}><Torus args={[0.24,0.085,10,24]} material={chainMat}/></group>;
+    if (link === "figaro") {
+      const long = i % 3 === 0;
+      return <group key={i} position={[x,y,0]} scale={long ? [1,1.55,0.6] : [1,1,0.6]} rotation={[0,rot,0]}><Torus args={[0.22,0.075,10,24]} material={chainMat}/></group>;
+    }
+    if (link === "mariner") return (
+      <group key={i} position={[x,y,0]} scale={[1,1.3,0.6]} rotation={[0,rot,0]}>
+        <Torus args={[0.22,0.07,10,24]} material={chainMat}/>
+        <mesh material={chainMat}><boxGeometry args={[0.4,0.05,0.05]}/></mesh>
+      </group>
+    );
     return <Torus key={i} args={[0.24,0.065,10,22]} position={[x,y,0]} rotation={[0,rot,0]} material={chainMat}/>;
   };
 
@@ -1353,6 +1422,16 @@ function Chain3D({ colors, pattern, options }: { colors: ProductColors; pattern:
         <RoundedBox args={[0.5,0.18,0.1]} radius={0.04} position={[0,-2.5,0]} material={pendantMat}/>
       </>}
       {pendant === "gem" && <mesh position={[0,-2.62,0]} material={gemMat}><octahedronGeometry args={[0.34,0]}/></mesh>}
+      {pendant === "heart" && <>
+        <mesh position={[-0.14,-2.5,0]} material={pendantMat}><sphereGeometry args={[0.19,18,18]}/></mesh>
+        <mesh position={[0.14,-2.5,0]} material={pendantMat}><sphereGeometry args={[0.19,18,18]}/></mesh>
+        <mesh position={[0,-2.78,0]} rotation={[0,0,Math.PI/4]} material={pendantMat}><boxGeometry args={[0.3,0.3,0.12]}/></mesh>
+      </>}
+      {pendant === "star" && <mesh position={[0,-2.6,0]} scale={[1,1,0.4]} material={pendantMat}><octahedronGeometry args={[0.42,0]}/></mesh>}
+      {pendant === "coin" && <>
+        <mesh position={[0,-2.6,0]} rotation={[Math.PI/2,0,0]} material={pendantMat}><cylinderGeometry args={[0.4,0.4,0.08,32]}/></mesh>
+        <Torus args={[0.4,0.045,10,32]} position={[0,-2.6,0.02]} material={pendantMat}/>
+      </>}
     </group>
   );
 }
@@ -1363,7 +1442,7 @@ function Chain3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 function Wallet3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
   const mat = useMat(colors, pattern, 0.6, 0, 0.5, finishOf(options));
   const inner = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining), roughness: 0.7 }), [colors.lining]);
-  const stitchCol = options?.stitch === "white" ? "#EDEDED" : options?.stitch === "tonal" ? "#3A3A3A" : colors.accent;
+  const stitchCol = (!options?.stitch || options.stitch === "accent") ? colors.accent : (STITCH_COLORS[options.stitch] || colors.accent);
   const stitchMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(stitchCol), roughness: 0.8 }), [stitchCol]);
   return (
     <group rotation={[0.22, 0.32, 0]}>
@@ -1413,15 +1492,19 @@ function Scarf3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 function Socks3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
   const mat = useMat(colors, pattern, 0.86, 0, 0.1, finishOf(options));
   const cuff = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.accent), roughness: 0.86 }), [colors.accent]);
+  const len = options?.length || "crew";
+  const legH = len === "ankle" ? 1.25 : len === "knee" ? 3.45 : 2.35;
+  const legY = -0.6 + legH / 2;
+  const cuffY = -0.6 + legH + 0.05;
   return (
     <group rotation={[0.2, 0.3, 0]}>
       {/* Leg tube */}
-      <Cylinder args={[0.58, 0.52, 2.35, 26]} position={[0,0.58,0]} material={mat}/>
+      <Cylinder args={[0.58, 0.52, legH, 26]} position={[0,legY,0]} material={mat}/>
       {/* Ribbed cuff */}
-      <Cylinder args={[0.6, 0.6, 0.48, 26]} position={[0,1.82,0]} material={cuff}/>
+      <Cylinder args={[0.6, 0.6, 0.48, 26]} position={[0,cuffY,0]} material={cuff}/>
       {/* Rib lines on cuff */}
       {Array.from({length:10},(_,i) => (
-        <Torus key={i} args={[0.6, 0.018, 6, 26, Math.PI*2]} position={[0,1.6+i*0.04,0]} rotation={[Math.PI/2,0,0]} material={cuff}/>
+        <Torus key={i} args={[0.6, 0.018, 6, 26, Math.PI*2]} position={[0,cuffY-0.22+i*0.04,0]} rotation={[Math.PI/2,0,0]} material={cuff}/>
       ))}
       {/* Heel */}
       <Sphere args={[0.58, 16, 16, Math.PI, Math.PI, 0, Math.PI/2]} position={[0.35,-0.62,0.25]} rotation={[Math.PI/2,Math.PI/2,0]} material={cuff}/>
@@ -1610,47 +1693,99 @@ function Ring3D({ colors, pattern, options }: { colors: ProductColors; pattern: 
 // ─────────────────────────────────────────────
 function Earrings3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
   const o = options || {};
-  const metal = useMemo(() => metalMaterial(o.metal, colors.accent), [o.metal, colors.accent]);
-  const gem = useMemo(() => gemMaterial(o.gem, colors.main), [o.gem, colors.main]);
-  const cutGeo = useMemo(() => gemCutGeometry(o.gem === "pearl" ? "round" : "marquise", 0.28), [o.gem]);
+  const metal  = useMemo(() => metalMaterial(o.metal, colors.accent), [o.metal, colors.accent]);
+  const metal2 = useMemo(() => metalMaterial(o.metal, colors.secondary), [o.metal, colors.secondary]);
+  const gem  = useMemo(() => gemMaterial(o.gem, colors.main), [o.gem, colors.main]);
+  const gem2 = useMemo(() => gemMaterial(o.gem, colors.secondary), [o.gem, colors.secondary]);
+  const cut = o.gem === "pearl" ? "round" : (o.cut || "round");
+  const gemBig = useMemo(() => gemCutGeometry(cut, 0.30), [cut]);
+  const gemMid = useMemo(() => gemCutGeometry(cut, 0.19), [cut]);
+  const gemSm  = useMemo(() => gemCutGeometry(cut, 0.12), [cut]);
+  const pearGeo = useMemo(() => gemCutGeometry("pear", 0.34), []);
   const style = o.style || "drop";
-  const renderEarring = (x: number) => {
-    if (style === "hoop") {
-      // Big statement hoop only
-      return (
-        <group key={x} position={[x, 0.1, 0]}>
-          <Torus args={[0.78, 0.085, 16, 52]} material={metal}/>
-          <mesh position={[0, 0.78, 0]} material={metal}><sphereGeometry args={[0.1, 16, 16]}/></mesh>
-        </group>
-      );
+  const sizeMap: Record<string, number> = { small: 0.78, medium: 1.0, large: 1.26, statement: 1.5 };
+  const s = sizeMap[o.size || "medium"] ?? 1.0;
+
+  // one earring's geometry, anchored near the lobe (origin), built once and mirrored for the pair
+  const content = () => {
+    switch (style) {
+      case "hoop": return (<>
+        <Torus args={[0.7, 0.085, 16, 52]} position={[0,-0.12,0]} material={metal}/>
+        <mesh position={[0, 0.6, 0]} material={metal}><sphereGeometry args={[0.1, 16, 16]}/></mesh>
+      </>);
+      case "huggie": return (<>
+        <Torus args={[0.4, 0.15, 16, 40]} material={metal}/>
+        <mesh position={[0,0.36,0.18]} geometry={gemSm} material={gem}/>
+        <mesh position={[0,0.16,0.2]} geometry={gemSm} material={gem}/>
+      </>);
+      case "stud": return (<>
+        <mesh material={metal}><cylinderGeometry args={[0.3,0.3,0.1,24]}/></mesh>
+        <mesh position={[0,0,0.12]} geometry={gemBig} material={gem}/>
+        {[0,72,144,216,288].map((a,i)=>(
+          <mesh key={i} position={[0.24*Math.cos(a*Math.PI/180),0.24*Math.sin(a*Math.PI/180),0.12]} material={metal}><boxGeometry args={[0.04,0.16,0.04]}/></mesh>
+        ))}
+      </>);
+      case "teardrop": return (<>
+        <mesh position={[0,0.7,0]} material={metal}><sphereGeometry args={[0.1,14,14]}/></mesh>
+        <mesh position={[0,0.34,0]} material={metal}><cylinderGeometry args={[0.03,0.03,0.5,8]}/></mesh>
+        <mesh position={[0,-0.12,0]} geometry={pearGeo} material={gem}/>
+      </>);
+      case "chandelier": return (<>
+        <mesh position={[0,0.9,0]} material={metal}><cylinderGeometry args={[0.16,0.16,0.08,20]}/></mesh>
+        <mesh position={[0,0.9,0.07]} geometry={gemMid} material={gem}/>
+        <RoundedBox args={[0.9,0.1,0.08]} radius={0.04} position={[0,0.5,0]} material={metal}/>
+        {[-0.34,0,0.34].map((dx,i)=>(
+          <group key={i} position={[dx,0,0]}>
+            <mesh position={[0,0.28,0]} material={metal}><cylinderGeometry args={[0.02,0.02,0.42-Math.abs(dx),8]}/></mesh>
+            <mesh position={[0,0.0-Math.abs(dx),0]} geometry={gemMid} material={i===1?gem:gem2}/>
+          </group>
+        ))}
+      </>);
+      case "threader": return (<>
+        <mesh position={[0,0.3,0]} rotation={[0,0,0.12]} material={metal}><cylinderGeometry args={[0.03,0.03,1.7,10]}/></mesh>
+        <mesh position={[0.12,-0.62,0]} geometry={gemMid} material={gem}/>
+      </>);
+      case "ear-cuff": return (<>
+        <Torus args={[0.5, 0.09, 14, 40, Math.PI*1.4]} rotation={[0,0,Math.PI*0.32]} material={metal}/>
+        <mesh position={[0.44,0.34,0]} geometry={gemSm} material={gem}/>
+      </>);
+      case "jhumka": return (<>
+        <mesh position={[0,0.62,0]} material={metal}><cylinderGeometry args={[0.16,0.16,0.08,20]}/></mesh>
+        <mesh position={[0,0.62,0.06]} geometry={gemSm} material={gem}/>
+        <Cylinder args={[0.14, 0.5, 0.42, 28]} position={[0,0.24,0]} material={metal}/>
+        <Sphere args={[0.5, 24, 16, 0, Math.PI*2, 0, Math.PI/2]} position={[0,0.02,0]} rotation={[Math.PI,0,0]} material={metal2}/>
+        {Array.from({length:9},(_,i)=>{const a=(i/9)*Math.PI*2; return (
+          <mesh key={i} position={[0.46*Math.cos(a), -0.12, 0.46*Math.sin(a)]} material={gem}><sphereGeometry args={[0.07,12,12]}/></mesh>
+        );})}
+      </>);
+      case "cluster": return (<>
+        <mesh material={metal2}><cylinderGeometry args={[0.42,0.42,0.08,28]}/></mesh>
+        <mesh position={[0,0,0.12]} geometry={gemMid} material={gem}/>
+        {Array.from({length:6},(_,i)=>{const a=(i/6)*Math.PI*2; return (
+          <mesh key={i} position={[0.28*Math.cos(a), 0.28*Math.sin(a), 0.11]} geometry={gemSm} material={gem2}/>
+        );})}
+      </>);
+      case "bar": return (<>
+        <RoundedBox args={[0.12, 0.85, 0.12]} radius={0.05} material={metal}/>
+        <mesh position={[0,0.52,0.05]} geometry={gemSm} material={gem}/>
+      </>);
+      case "star": return (<>
+        <mesh material={metal}><cylinderGeometry args={[0.22,0.22,0.08,20]}/></mesh>
+        <mesh position={[0,0,0.14]} scale={[1,1,0.4]} material={gem}><octahedronGeometry args={[0.38,0]}/></mesh>
+      </>);
+      // drop (default) — small hoop top + post + dangling gem
+      default: return (<>
+        <Torus args={[0.42, 0.07, 14, 44]} position={[0,0.55,0]} material={metal}/>
+        <RoundedBox args={[0.1, 0.5, 0.1]} radius={0.05} position={[0,0.05,0]} material={metal}/>
+        <mesh position={[0,-0.4,0]} geometry={gemBig} material={gem}/>
+      </>);
     }
-    if (style === "stud") {
-      // Small gem on a post, sitting close to the ear
-      return (
-        <group key={x} position={[x, 0.2, 0]}>
-          <mesh material={metal}><cylinderGeometry args={[0.34, 0.34, 0.1, 24]}/></mesh>
-          <mesh position={[0, 0, 0.12]} geometry={cutGeo} material={gem}/>
-          {[0,72,144,216,288].map((a,i) => (
-            <mesh key={i} position={[0.26*Math.cos(a*Math.PI/180), 0.26*Math.sin(a*Math.PI/180), 0.1]} material={metal}>
-              <boxGeometry args={[0.04, 0.16, 0.04]}/>
-            </mesh>
-          ))}
-        </group>
-      );
-    }
-    // drop — hoop top + post + dangling gem
-    return (
-      <group key={x}>
-        <Torus args={[0.52, 0.075, 14, 44]} position={[x,0.55,0]} material={metal}/>
-        <RoundedBox args={[0.1, 0.55, 0.1]} radius={0.05} position={[x,-0.14,0]} material={metal}/>
-        <mesh position={[x,-0.58,0]} geometry={cutGeo} material={gem}/>
-      </group>
-    );
   };
+
   return (
     <group>
-      {renderEarring(-1.25)}
-      {renderEarring(1.25)}
+      <group position={[-1.25, 0.1, 0]} scale={s}>{content()}</group>
+      <group position={[1.25, 0.1, 0]} scale={s}>{content()}</group>
     </group>
   );
 }
@@ -1991,6 +2126,73 @@ function Kurti3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 // ─────────────────────────────────────────────
 // MODEL MAP
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// MANNEQUIN — procedural male / female body so garments can be previewed "worn".
+// The torso is flattened + recessed so the (largely flat) garment shells cover it,
+// while head, arms and legs keep full volume so the figure reads as a real person.
+// ─────────────────────────────────────────────
+function Mannequin({ gender }: { gender: "male" | "female" }) {
+  const female = gender === "female";
+  const skin = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color("#C9BCA8"), roughness: 0.85, metalness: 0.02 }), []);
+  const hair = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(female ? "#2A1E16" : "#211A14"), roughness: 0.72 }), [female]);
+
+  const shoulderR = female ? 0.92 : 1.14;
+  const waistR    = female ? 0.70 : 0.86;
+  const hipR      = female ? 1.02 : 0.92;
+  const armR      = female ? 0.17 : 0.22;
+  const legR      = female ? 0.30 : 0.35;
+
+  return (
+    <group>
+      {/* Head */}
+      <group position={[0, 2.78, 0.02]}>
+        <mesh material={skin}><sphereGeometry args={[0.5, 32, 32]}/></mesh>
+        {/* hair cap */}
+        <mesh position={[0, 0.08, -0.04]} material={hair}>
+          <sphereGeometry args={[0.515, 32, 32, 0, Math.PI*2, 0, female ? Math.PI*0.62 : Math.PI*0.5]}/>
+        </mesh>
+        {female && <mesh position={[0,-0.46,-0.32]} material={hair}><boxGeometry args={[0.9,1.15,0.3]}/></mesh>}
+        {/* tiny nose so the facing direction reads while rotating */}
+        <mesh position={[0,-0.04,0.5]} rotation={[Math.PI/2,0,0]} material={skin}><cylinderGeometry args={[0.0, 0.075, 0.18, 8]}/></mesh>
+      </group>
+      {/* Neck */}
+      <Cylinder args={[0.2, 0.25, 0.52, 24]} position={[0, 2.28, 0]} material={skin}/>
+      {/* Torso — flattened + recessed so the garment covers it */}
+      <group scale={[1, 1, 0.45]} position={[0, 0, -0.18]}>
+        <Cylinder args={[shoulderR, waistR, 1.72, 32]} position={[0, 1.05, 0]} material={skin}/>
+        <Cylinder args={[waistR, hipR, 1.2, 32]} position={[0, -0.5, 0]} material={skin}/>
+        <Sphere args={[shoulderR*0.6, 24, 24]} position={[0, 1.84, 0]} material={skin}/>
+        {female && <>
+          <mesh position={[-0.32, 1.18, 0.95]} material={skin}><sphereGeometry args={[0.3,20,20]}/></mesh>
+          <mesh position={[0.32, 1.18, 0.95]} material={skin}><sphereGeometry args={[0.3,20,20]}/></mesh>
+        </>}
+      </group>
+      {/* Pelvis */}
+      <Sphere args={[hipR*0.86, 24, 24]} position={[0, -1.05, -0.18]} scale={[1, 0.78, 0.5]} material={skin}/>
+      {/* Arms (slight A-pose splay) */}
+      {[-1, 1].map((sgn) => (
+        <group key={sgn} position={[sgn*(shoulderR+0.04), 1.72, 0]} rotation={[0, 0, -sgn*0.18]}>
+          <Sphere args={[armR*1.2, 18, 18]} material={skin}/>
+          <Cylinder args={[armR, armR*0.9, 1.3, 18]} position={[0, -0.66, 0]} material={skin}/>
+          <Sphere args={[armR*0.95, 16, 16]} position={[0, -1.32, 0]} material={skin}/>
+          <Cylinder args={[armR*0.88, armR*0.74, 1.2, 18]} position={[0, -1.95, 0]} material={skin}/>
+          <mesh position={[0, -2.65, 0]} scale={[1, 1.5, 0.55]} material={skin}><sphereGeometry args={[armR*1.05, 14, 14]}/></mesh>
+        </group>
+      ))}
+      {/* Legs */}
+      {[-1, 1].map((sgn) => (
+        <group key={sgn} position={[sgn*0.46, -1.1, 0]}>
+          <Sphere args={[legR*1.05, 18, 18]} material={skin}/>
+          <Cylinder args={[legR, legR*0.85, 1.55, 20]} position={[0, -0.85, 0]} material={skin}/>
+          <Sphere args={[legR*0.8, 16, 16]} position={[0, -1.6, 0]} material={skin}/>
+          <Cylinder args={[legR*0.82, legR*0.5, 1.5, 20]} position={[0, -2.35, 0]} material={skin}/>
+          <mesh position={[0, -3.12, 0.3]} scale={[1, 0.5, 2.0]} material={skin}><sphereGeometry args={[legR*0.72, 14, 14]}/></mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
 const MODEL_MAP: Record<string, React.FC<{ colors: ProductColors; pattern: string; options?: Opts }>> = {
   "tshirt": TShirt3D, "shirt": Shirt3D, "polo": Polo3D,
   "hoodie": Hoodie3D, "jacket": Jacket3D, "bomber": Bomber3D,
@@ -2009,10 +2211,12 @@ const MODEL_MAP: Record<string, React.FC<{ colors: ProductColors; pattern: strin
   "ring": Ring3D, "earrings": Earrings3D,
 };
 
-export default function Product3DViewer({ productType, colors, pattern, options }: {
+export default function Product3DViewer({ productType, colors, pattern, options, showBody, bodyGender }: {
   productType: string; colors: ProductColors; pattern: string; options?: Record<string, string>;
+  showBody?: boolean; bodyGender?: "male" | "female";
 }) {
   const Model = MODEL_MAP[productType] || TShirt3D;
+  const onBody = !!showBody;
   return (
     <Canvas
       camera={{ position: [0, 0, 7], fov: 42 }}
@@ -2028,9 +2232,13 @@ export default function Product3DViewer({ productType, colors, pattern, options 
       <spotLight position={[0, 9, 5]} angle={0.4} penumbra={0.7} intensity={1.6} castShadow/>
       <Suspense fallback={null}>
         <RotatingModel>
-          <Model colors={colors} pattern={pattern} options={options}/>
+          {/* On-body view shrinks + lifts the whole rig so the full figure frames cleanly */}
+          <group scale={onBody ? 0.65 : 1} position={onBody ? [0, 0.36, 0] : [0, 0, 0]}>
+            {onBody && <Mannequin gender={bodyGender === "female" ? "female" : "male"}/>}
+            <Model colors={colors} pattern={pattern} options={options}/>
+          </group>
         </RotatingModel>
-        <ContactShadows position={[0,-3.5,0]} opacity={0.6} scale={16} blur={2.6} resolution={1024} far={5}/>
+        <ContactShadows position={[0, onBody ? -2.5 : -3.5, 0]} opacity={0.6} scale={16} blur={2.6} resolution={1024} far={5}/>
         <Environment preset="studio"/>
       </Suspense>
       <OrbitControls enablePan={false} minDistance={3} maxDistance={14} enableDamping dampingFactor={0.08}/>
