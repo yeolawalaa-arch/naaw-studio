@@ -350,8 +350,11 @@ function makeTexture(colors: ProductColors, pattern: string): THREE.CanvasTextur
 
   ctx.globalAlpha = 1;
   const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 8;
   tex.repeat.set(3, 3);
+  tex.needsUpdate = true;
   return tex;
 }
 
@@ -364,14 +367,14 @@ function useMat(colors: ProductColors, pattern: string, roughness = 0.6, metalne
     const mtl = fabric?.metalness ?? metalness;
     if (cc > 0 || sheen > 0) {
       const m = new THREE.MeshPhysicalMaterial({
-        map: tex, color: new THREE.Color(colors.main),
+        map: tex, color: new THREE.Color(tex ? 0xffffff : colors.main),
         roughness: r, metalness: mtl, clearcoat: cc, clearcoatRoughness: 0.15,
       });
       if (sheen > 0) { m.sheen = sheen; m.sheenRoughness = 0.45; m.sheenColor = new THREE.Color(colors.accent); }
       return m;
     }
     return new THREE.MeshStandardMaterial({
-      map: tex, color: new THREE.Color(colors.main), roughness: r, metalness: mtl,
+      map: tex, color: new THREE.Color(tex ? 0xffffff : colors.main), roughness: r, metalness: mtl,
     });
   }, [colors.main, colors.accent, colors.detail, colors.secondary, colors.lining, pattern, roughness, metalness, clearcoat, fabric?.roughness, fabric?.clearcoat, fabric?.sheen, fabric?.metalness]);
 }
@@ -900,15 +903,19 @@ function Jeans3D({ colors, pattern, options }: { colors: ProductColors; pattern:
   const stitchMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(STITCH_COLORS[options?.stitch || "gold"] || "#D4A853"), roughness: 0.85 }), [options?.stitch]);
   return (
     <group>
-      <RoundedBox args={[2.7, 0.55, 0.65]} radius={0.09} position={[0,1.9,0]} material={waist}/>
-      <RoundedBox args={[1.12, 3.42, 0.6]} radius={0.1} position={[-0.72,-0.15,0]} material={mat}/>
-      <RoundedBox args={[1.12, 3.42, 0.6]} radius={0.1} position={[0.72,-0.15,0]} material={mat}/>
-      {/* Topstitching */}
-      <RoundedBox args={[0.04, 3.42, 0.62]} radius={0.02} position={[-0.22,-0.15,0.01]} material={stitchMat}/>
-      <RoundedBox args={[0.04, 3.42, 0.62]} radius={0.02} position={[0.22,-0.15,0.01]} material={stitchMat}/>
+      <RoundedBox args={[2.7, 0.55, 0.86]} radius={0.09} position={[0,1.9,0.04]} material={waist}/>
+      {/* Solid hip/seat block — one piece, no centre gap where the inner thighs used to show through */}
+      <RoundedBox args={[2.5, 1.6, 0.82]} radius={0.12} position={[0,1.05,0.04]} material={mat}/>
+      {/* Two legs that OVERLAP across the centre line, at a uniform forward depth so the thighs sit behind */}
+      <RoundedBox args={[1.35, 2.8, 0.82]} radius={0.12} position={[-0.56,-0.85,0.04]} material={mat}/>
+      <RoundedBox args={[1.35, 2.8, 0.82]} radius={0.12} position={[0.56,-0.85,0.04]} material={mat}/>
+      {/* Centre-front + inseam topstitching */}
+      <RoundedBox args={[0.04, 1.4, 0.04]} radius={0.02} position={[0,1.0,0.46]} material={stitchMat}/>
+      <RoundedBox args={[0.04, 2.7, 0.04]} radius={0.02} position={[-0.2,-0.85,0.46]} material={stitchMat}/>
+      <RoundedBox args={[0.04, 2.7, 0.04]} radius={0.02} position={[0.2,-0.85,0.46]} material={stitchMat}/>
       {/* Belt loops */}
       {[-0.9,-0.3,0.3,0.9].map((x,i) => (
-        <RoundedBox key={i} args={[0.12, 0.45, 0.08]} radius={0.04} position={[x,1.95,0.34]} material={waist}/>
+        <RoundedBox key={i} args={[0.12, 0.45, 0.08]} radius={0.04} position={[x,1.95,0.48]} material={waist}/>
       ))}
     </group>
   );
@@ -947,27 +954,42 @@ function Cap3D({ colors, pattern, options }: { colors: ProductColors; pattern: s
 // BEANIE
 // ─────────────────────────────────────────────
 function Beanie3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.9, 0, 0.1, finishOf(options));
-  const acc = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.accent), roughness: 0.82 }), [colors.accent]);
+  const mat = useMat(colors, pattern, 0.92, 0, 0, finishOf(options));
+  // Ribs are the SAME knit, just a touch darker — gives knit grooves without a metallic look.
+  const rib = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.main).multiplyScalar(0.8), roughness: 0.96 }), [colors.main]);
+  const pomMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.accent), roughness: 0.68 }), [colors.accent]);
   const pom = options?.pom !== "no";
   const cuff = options?.cuff || "folded";
-  const domeScaleY = cuff === "slouch" ? 1.24 : cuff === "tight" ? 0.92 : 1.0;
-  const domeY = cuff === "slouch" ? 0.18 : 0;
-  const cuffH = cuff === "slouch" ? 0.36 : cuff === "tight" ? 0.2 : 0.42;
-  const cuffY = cuff === "tight" ? -0.7 : -0.78;
-  const pomY = 1.15 * domeScaleY + domeY;
+  const domeY = cuff === "slouch" ? 0.16 : cuff === "tight" ? -0.04 : 0.06;
+  const domeSY = cuff === "slouch" ? 1.04 : cuff === "tight" ? 0.74 : 0.86;
+  const cuffH = cuff === "tight" ? 0.26 : 0.36;
+  const RIBS = 22;
+  const domeTop = domeY + 1.02 * domeSY;
   return (
     <group>
-      {/* Main knit dome */}
-      <Sphere args={[1.12, 32, 32]} scale={[1, domeScaleY, 1]} position={[0, domeY, 0]} material={mat}/>
-      {/* Pom-pom */}
-      {pom && <Sphere args={[0.24, 16, 16]} position={[0, pomY, 0]} material={acc}/>}
-      {/* Cuff fold */}
-      <Cylinder args={[1.15, 1.18, cuffH, 36]} position={[0, cuffY, 0]} material={acc}/>
-      {/* Rib texture bands */}
-      {[-0.55,-0.2,0.15,0.5,0.85].map((y,i) => (
-        <Torus key={i} args={[1.12, 0.025, 6, 36, Math.PI*2]} position={[0, y * domeScaleY + domeY, 0]} rotation={[Math.PI/2,0,0]} material={acc}/>
-      ))}
+      {/* Knit dome — open-bottomed cap the head fills (no floating ball) */}
+      <mesh position={[0, domeY, 0]} scale={[1, domeSY, 1]} material={mat}>
+        <sphereGeometry args={[1.02, 40, 32, 0, Math.PI * 2, 0, Math.PI * 0.6]} />
+      </mesh>
+      {/* Rolled cuff band around the forehead */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} material={mat}>
+        <torusGeometry args={[1.0, 0.17, 16, 48]} />
+      </mesh>
+      {/* Vertical knit ribs riding the cuff */}
+      {Array.from({ length: RIBS }).map((_, i) => {
+        const a = (i / RIBS) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(a) * 1.1, 0, Math.sin(a) * 1.1]} rotation={[0, -a, 0]} material={rib}>
+            <boxGeometry args={[0.07, cuffH, 0.12]} />
+          </mesh>
+        );
+      })}
+      {/* Small pom-pom on top */}
+      {pom && (
+        <mesh position={[0, domeTop + 0.04, 0]} material={pomMat}>
+          <sphereGeometry args={[0.2, 20, 20]} />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -979,8 +1001,7 @@ function BucketHat3D({ colors, pattern, options }: { colors: ProductColors; patt
   const mat = useMat(colors, pattern, 0.82, 0, 0.2, finishOf(options));
   const brim = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.82, clearcoat: 0.2 }), [colors.secondary]);
   const brimSize = options?.brim || "medium";
-  const brimR = brimSize === "short" ? 1.18 : brimSize === "wide" ? 1.68 : 1.4;
-  const brimT = brimSize === "short" ? 0.18 : brimSize === "wide" ? 0.26 : 0.22;
+  const brimR = brimSize === "short" ? 1.26 : brimSize === "wide" ? 1.66 : 1.44;
   return (
     <group>
       {/* Crown */}
@@ -989,9 +1010,13 @@ function BucketHat3D({ colors, pattern, options }: { colors: ProductColors; patt
       <mesh material={mat} position={[0, 0.88, 0]}>
         <cylinderGeometry args={[0.82, 0.82, 0.1, 36]}/>
       </mesh>
-      {/* Floppy brim */}
-      <mesh material={brim} position={[0,-0.22,0]} rotation={[-0.18,0,0]}>
-        <torusGeometry args={[brimR, brimT, 12, 36, Math.PI*2]}/>
+      {/* Down-turned floppy brim (cone flaring out + down, not a flat halo) */}
+      <mesh material={brim} position={[0,-0.34,0]}>
+        <cylinderGeometry args={[1.0, brimR, 0.52, 40, 1, true]}/>
+      </mesh>
+      {/* Rolled brim edge */}
+      <mesh material={brim} position={[0,-0.6,0]} rotation={[Math.PI/2,0,0]}>
+        <torusGeometry args={[brimR, 0.07, 10, 40, Math.PI*2]}/>
       </mesh>
       {/* Band detail */}
       <Torus args={[1.02, 0.06, 10, 36, Math.PI*2]} position={[0,-0.02,0]} rotation={[Math.PI/2,0,0]} material={brim}/>
@@ -1165,9 +1190,15 @@ function Backpack3D({ colors, pattern, options }: { colors: ProductColors; patte
       <mesh material={metal} position={[1.18,1.62,0.1]} rotation={[0,0,Math.PI/2]}>
         <cylinderGeometry args={[0.06,0.06,0.18,8]}/>
       </mesh>
-      {/* Shoulder straps */}
+      {/* Shoulder straps (back of pack) */}
       <RoundedBox args={[0.22, 2.6, 0.14]} radius={0.08} position={[-0.7,0,-0.42]} material={dark}/>
       <RoundedBox args={[0.22, 2.6, 0.14]} radius={0.08} position={[0.7,0,-0.42]} material={dark}/>
+      {/* Front straps — drape over the shoulders onto the chest so the pack reads as "worn" from the front.
+          After the wear-rotation (Y 180°, scale 0.5, pos z -0.72) local z -2.3 lands at world z +0.43, on the chest. */}
+      <RoundedBox args={[0.44, 2.3, 0.4]} radius={0.1} position={[-1.0,0.85,-2.3]} material={dark}/>
+      <RoundedBox args={[0.44, 2.3, 0.4]} radius={0.1} position={[1.0,0.85,-2.3]} material={dark}/>
+      {/* Sternum clip tying the two front straps together */}
+      <RoundedBox args={[2.0, 0.2, 0.34]} radius={0.08} position={[0,0.2,-2.28]} material={metal}/>
       {/* Handle */}
       <RoundedBox args={[0.58, 0.18, 0.16]} radius={0.07} position={[0,1.72,-0.18]} material={dark}/>
     </group>
@@ -1801,20 +1832,24 @@ function Saree3D({ colors, pattern, options }: { colors: ProductColors; pattern:
   const border = useMemo(() => metalMaterial(o.border, colors.accent), [o.border, colors.accent]);
   // Drape style varies how the pallu falls: nivi over left shoulder, bengali fuller/centered, gujarati over right
   const drape = o.drape || "nivi";
-  const palluX = drape === "gujarati" ? 2.18 : -2.18;
-  const palluRot = drape === "gujarati" ? -0.2 : 0.2;
-  const palluBorderX = drape === "gujarati" ? 2.66 : -2.66;
-  const palluWidth = drape === "bengali" ? 1.35 : 0.95;
+  const side = drape === "gujarati" ? 1 : -1; // shoulder the pallu crosses to
+  const sashRot = -side * 0.62;
+  const sashCX = side * 0.05;
+  const sashCY = 0.95;
+  const bx = sashCX + 0.5 * Math.cos(sashRot);
+  const by = sashCY + 0.5 * Math.sin(sashRot);
   return (
     <group>
       {/* Main drape */}
       <RoundedBox args={[2.95, 4.8, 0.09]} radius={0.06} position={[0,-0.45,0]} material={mat}/>
-      {/* Blouse */}
-      <RoundedBox args={[2.55, 1.05, 0.16]} radius={0.08} position={[0,2.1,0.06]} material={blouse}/>
-      {/* Pallu drape over shoulder */}
-      <RoundedBox args={[palluWidth, 3.85, 0.08]} radius={0.06} position={[palluX,0.35,0.07]} rotation={[0,0,palluRot]} material={mat}/>
-      {/* Pallu border */}
-      <RoundedBox args={[0.22, 3.85, 0.1]} radius={0.04} position={[palluBorderX,0.35,0.08]} rotation={[0,0,palluRot]} material={border}/>
+      {/* Choli (blouse) — fitted on the chest, below the neckline */}
+      <RoundedBox args={[2.4, 0.86, 0.2]} radius={0.1} position={[0,1.78,0.05]} material={blouse}/>
+      {/* Pallu — diagonal sash drawn across the torso (hip → opposite shoulder) */}
+      <RoundedBox args={[0.98, 3.5, 0.1]} radius={0.06} position={[sashCX, sashCY, 0.2]} rotation={[0,0,sashRot]} material={mat}/>
+      <RoundedBox args={[0.2, 3.5, 0.12]} radius={0.04} position={[bx, by, 0.22]} rotation={[0,0,sashRot]} material={border}/>
+      {/* Pallu falling from the shoulder down the side */}
+      <RoundedBox args={[1.0, 2.8, 0.08]} radius={0.06} position={[side*1.18, 0.5, 0.05]} rotation={[0,0,-side*0.08]} material={mat}/>
+      <RoundedBox args={[0.18, 2.8, 0.1]} radius={0.04} position={[side*1.64, 0.5, 0.06]} rotation={[0,0,-side*0.08]} material={border}/>
       {/* Bottom border */}
       <RoundedBox args={[2.95, 0.32, 0.12]} radius={0.05} position={[0,-2.9,0.06]} material={border}/>
       {/* Waistband */}
@@ -2133,8 +2168,12 @@ function Kurti3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 // ─────────────────────────────────────────────
 function Mannequin({ gender }: { gender: "male" | "female" }) {
   const female = gender === "female";
-  const skin = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color("#C9BCA8"), roughness: 0.85, metalness: 0.02 }), []);
-  const hair = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(female ? "#2A1E16" : "#211A14"), roughness: 0.72 }), [female]);
+  const skin = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(female ? "#E7BD9E" : "#D8AC89"), roughness: 0.62, metalness: 0 }), [female]);
+  const hair = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(female ? "#2A1E16" : "#211A14"), roughness: 0.6, metalness: 0.05 }), [female]);
+  const eyeWhite = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color("#F2EFEA"), roughness: 0.28 }), []);
+  const iris = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color("#3A2A1E"), roughness: 0.22, metalness: 0.1 }), []);
+  const brow = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(female ? "#4A3526" : "#33271C"), roughness: 0.72 }), [female]);
+  const lips = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(female ? "#A85F54" : "#B07E6A"), roughness: 0.52 }), [female]);
 
   const shoulderR = female ? 0.92 : 1.14;
   const waistR    = female ? 0.70 : 0.86;
@@ -2144,16 +2183,32 @@ function Mannequin({ gender }: { gender: "male" | "female" }) {
 
   return (
     <group>
-      {/* Head */}
+      {/* Head — egg-shaped skull + jaw, ears, and face features for a human read */}
       <group position={[0, 2.78, 0.02]}>
-        <mesh material={skin}><sphereGeometry args={[0.5, 32, 32]}/></mesh>
-        {/* hair cap */}
-        <mesh position={[0, 0.08, -0.04]} material={hair}>
-          <sphereGeometry args={[0.515, 32, 32, 0, Math.PI*2, 0, female ? Math.PI*0.62 : Math.PI*0.5]}/>
+        {/* cranium / face */}
+        <mesh material={skin} scale={[0.92, 1.06, 0.96]}><sphereGeometry args={[0.5, 48, 48]}/></mesh>
+        {/* jaw + chin */}
+        <mesh material={skin} position={[0, -0.36, 0.05]} scale={[0.66, 0.52, 0.7]}><sphereGeometry args={[0.5, 32, 32]}/></mesh>
+        {/* ears */}
+        {[-1,1].map((s)=>(<mesh key={`ear${s}`} material={skin} position={[s*0.45, -0.03, -0.04]} scale={[0.38, 0.92, 0.6]}><sphereGeometry args={[0.13, 18, 18]}/></mesh>))}
+        {/* hair — cap with a higher, natural hairline */}
+        <mesh position={[0, 0.09, -0.04]} material={hair} scale={[1.0, 1.04, 1.03]}>
+          <sphereGeometry args={[0.52, 44, 44, 0, Math.PI*2, 0, female ? Math.PI*0.54 : Math.PI*0.42]}/>
         </mesh>
-        {female && <mesh position={[0,-0.46,-0.32]} material={hair}><boxGeometry args={[0.9,1.15,0.3]}/></mesh>}
-        {/* tiny nose so the facing direction reads while rotating */}
-        <mesh position={[0,-0.04,0.5]} rotation={[Math.PI/2,0,0]} material={skin}><cylinderGeometry args={[0.0, 0.075, 0.18, 8]}/></mesh>
+        {female && <mesh position={[0,-0.5,-0.34]} material={hair}><boxGeometry args={[0.94,1.28,0.34]}/></mesh>}
+        {/* brows */}
+        {[-1,1].map((s)=>(<mesh key={`br${s}`} material={brow} position={[s*0.17, 0.15, 0.44]} rotation={[0,0,-s*0.08]} scale={[1,0.45,0.5]}><boxGeometry args={[0.16,0.035,0.05]}/></mesh>))}
+        {/* eyes — sclera + iris, set slightly into sockets */}
+        {[-1,1].map((s)=>(
+          <group key={`eye${s}`} position={[s*0.175, 0.02, 0.44]}>
+            <mesh material={eyeWhite} scale={[1.15,0.62,0.45]}><sphereGeometry args={[0.072,18,18]}/></mesh>
+            <mesh material={iris} position={[0,0,0.045]} scale={[1,1,0.6]}><sphereGeometry args={[0.034,16,16]}/></mesh>
+          </group>
+        ))}
+        {/* nose */}
+        <mesh position={[0,-0.04,0.49]} rotation={[Math.PI/2,0,0]} material={skin}><cylinderGeometry args={[0.0, 0.08, 0.26, 12]}/></mesh>
+        {/* lips */}
+        <mesh material={lips} position={[0,-0.22,0.45]} scale={[1.1,0.3,0.42]}><sphereGeometry args={[0.1,18,14]}/></mesh>
       </group>
       {/* Neck */}
       <Cylinder args={[0.2, 0.25, 0.52, 24]} position={[0, 2.28, 0]} material={skin}/>
@@ -2176,7 +2231,10 @@ function Mannequin({ gender }: { gender: "male" | "female" }) {
           <Cylinder args={[armR, armR*0.9, 1.3, 18]} position={[0, -0.66, 0]} material={skin}/>
           <Sphere args={[armR*0.95, 16, 16]} position={[0, -1.32, 0]} material={skin}/>
           <Cylinder args={[armR*0.88, armR*0.74, 1.2, 18]} position={[0, -1.95, 0]} material={skin}/>
-          <mesh position={[0, -2.65, 0]} scale={[1, 1.5, 0.55]} material={skin}><sphereGeometry args={[armR*1.05, 14, 14]}/></mesh>
+          <group position={[0, -2.65, 0]}>
+            <mesh scale={[1, 1.55, 0.5]} material={skin}><sphereGeometry args={[armR*1.05, 16, 16]}/></mesh>
+            <mesh position={[sgn*armR*0.72, 0.12, 0.04]} rotation={[0,0,sgn*0.5]} scale={[0.5,0.95,0.42]} material={skin}><sphereGeometry args={[armR*0.62, 12, 12]}/></mesh>
+          </group>
         </group>
       ))}
       {/* Legs */}
@@ -2211,15 +2269,88 @@ const MODEL_MAP: Record<string, React.FC<{ colors: ProductColors; pattern: strin
   "ring": Ring3D, "earrings": Earrings3D,
 };
 
-// On-body vertical offset (mannequin-space units) so each garment lands on the
-// right part of the body: tops lift to the neck, bottoms drop to the hips,
-// traditional/full-length sit roughly centred. Only applied when showBody.
-const WEAR_OFFSET: Record<string, number> = {
-  tshirt: 0.3, shirt: 0.3, polo: 0.3, hoodie: 0.32, jacket: 0.3, bomber: 0.45,
-  shorts: -1.5, joggers: -2.0, jeans: -2.2,
-  saree: -0.1, lehenga: -0.2, anarkali: 0.0, "salwar-kameez": 0.0, kurti: 0.1,
-  kurta: 0.1, sherwani: 0.05, "nehru-jacket": 0.2, pathani: 0.05, dhoti: -1.3,
+// On-body placement (in mannequin-space units, the coord system shared by the
+// Mannequin and the worn garment). Each item is positioned + scaled + rotated so
+// it lands on the correct body part. Garments stay scale 1 and only shift in Y
+// (tops up to the chest, bottoms down to the hips). Accessories shrink to body
+// scale and sit on the matching landmark (head / face / neck / waist / wrist /
+// feet). `pair` renders a second mirrored copy for left+right items (shoes,
+// socks, earrings already model their own pair). Only applied when showBody.
+type WearXf = { pos: [number, number, number]; scale: number | [number, number, number]; rot?: [number, number, number]; pair?: boolean };
+const WEAR_TRANSFORM: Record<string, WearXf> = {
+  // ── tops (cover the torso) ──
+  tshirt: { pos: [0, 0.3, 0], scale: 1 }, shirt: { pos: [0, 0.3, 0], scale: 1 },
+  polo: { pos: [0, 0.3, 0], scale: 1 }, hoodie: { pos: [0, 0.32, 0], scale: 1 },
+  jacket: { pos: [0, 0.3, 0], scale: 1 }, bomber: { pos: [0, 0.45, 0], scale: 1 },
+  // ── bottoms (drop to the hips) ──
+  shorts: { pos: [0, -1.5, 0], scale: 1 }, joggers: { pos: [0, -2.0, 0], scale: 1 },
+  jeans: { pos: [0, -2.2, 0], scale: 1 },
+  // ── traditional / full-length ──
+  saree: { pos: [0, -0.1, 0], scale: 1 }, lehenga: { pos: [0, -0.2, 0], scale: 1 },
+  anarkali: { pos: [0, 0.0, 0], scale: 1 }, "salwar-kameez": { pos: [0, 0.0, 0], scale: 1 },
+  kurti: { pos: [0, 0.1, 0], scale: 1 }, kurta: { pos: [0, 0.1, 0], scale: 1 },
+  sherwani: { pos: [0, 0.05, 0], scale: 1 }, "nehru-jacket": { pos: [0, 0.2, 0], scale: 1 },
+  pathani: { pos: [0, 0.05, 0], scale: 1 }, dhoti: { pos: [0, -1.3, 0], scale: 1 },
+  // ── headwear (sit on top of the head) ──
+  cap: { pos: [0, 3.04, -0.06], scale: 0.5, rot: [0.06, -0.2, 0] },
+  beanie: { pos: [0, 3.0, -0.04], scale: [0.56, 0.54, 0.56] },
+  "bucket-hat": { pos: [0, 3.1, -0.04], scale: 0.5 },
+  // ── face ──
+  sunglasses: { pos: [0, 2.82, 0.34], scale: 0.26, rot: [0.02, -0.15, 0] },
+  // ── neck / chest ──
+  chain: { pos: [0, 1.4, 0.12], scale: 0.3 },
+  scarf: { pos: [0, 2.02, 0.05], scale: 0.45 },
+  earrings: { pos: [0, 2.62, 0.16], scale: 0.34 },
+  // ── waist ──
+  belt: { pos: [0, 0.08, 0], scale: 0.42, rot: [1.27, -0.1, 0] },
+  // ── wrist / hand ──
+  watch: { pos: [0.85, -0.42, 0.04], scale: 0.2, rot: [0.55, -0.2, 0.05] },
+  ring: { pos: [0.73, -0.92, -0.02], scale: 0.12 },
+  wallet: { pos: [0.95, -0.7, 0.32], scale: 0.22 },
+  "phone-case": { pos: [0.95, -0.68, 0.36], scale: 0.22, rot: [0, 0.3, 0] },
+  // ── carried bags ──
+  backpack: { pos: [0, 1.0, -0.72], scale: 0.5, rot: [0, Math.PI, 0] },
+  tote: { pos: [0.98, -1.05, 0.2], scale: 0.42 },
+  // ── footwear (pair: one on each foot, toe pointing forward +Z) ──
+  // shoes model a side-profile (toe at -X) → +π/2 about Y turns the toe to face the camera
+  "sneaker-low": { pos: [0.46, -4.2, 0.18], scale: 0.2, rot: [0, Math.PI / 2, 0], pair: true },
+  "sneaker-high": { pos: [0.46, -4.08, 0.16], scale: 0.2, rot: [0, Math.PI / 2, 0], pair: true },
+  boot: { pos: [0.46, -3.98, 0.14], scale: 0.2, rot: [0, Math.PI / 2, 0], pair: true },
+  "slip-on": { pos: [0.46, -4.2, 0.18], scale: 0.2, rot: [0, Math.PI / 2, 0], pair: true },
+  // sandal models a flat footprint (length X, "up" +Z) → lay it flat + toe forward
+  sandal: { pos: [0.46, -4.3, 0.16], scale: 0.2, rot: [-Math.PI / 2, 0, Math.PI / 2], pair: true },
+  // ── ankles ── (sock models toe at +X → -π/2 about Y points it forward)
+  socks: { pos: [0.46, -3.7, 0.16], scale: 0.4, rot: [0, -Math.PI / 2, 0], pair: true },
 };
+
+// Places a product onto the mannequin using its WEAR_TRANSFORM (and mirrors it
+// across the body centre-line for paired items like shoes/socks).
+function WornModel({ productType, Model, colors, pattern, options }: {
+  productType: string;
+  Model: React.FC<{ colors: ProductColors; pattern: string; options?: Opts }>;
+  colors: ProductColors; pattern: string; options?: Opts;
+}) {
+  const xf = WEAR_TRANSFORM[productType] || { pos: [0, 0, 0] as [number, number, number], scale: 1 };
+  const rot = xf.rot ?? [0, 0, 0];
+  if (xf.pair) {
+    const ax = Math.abs(xf.pos[0]);
+    return (
+      <>
+        <group position={[ax, xf.pos[1], xf.pos[2]]} scale={xf.scale} rotation={rot}>
+          <Model colors={colors} pattern={pattern} options={options}/>
+        </group>
+        <group position={[-ax, xf.pos[1], xf.pos[2]]} scale={xf.scale} rotation={rot}>
+          <Model colors={colors} pattern={pattern} options={options}/>
+        </group>
+      </>
+    );
+  }
+  return (
+    <group position={xf.pos} scale={xf.scale} rotation={rot}>
+      <Model colors={colors} pattern={pattern} options={options}/>
+    </group>
+  );
+}
 
 export default function Product3DViewer({ productType, colors, pattern, options, showBody, bodyGender, still }: {
   productType: string; colors: ProductColors; pattern: string; options?: Record<string, string>;
@@ -2227,7 +2358,6 @@ export default function Product3DViewer({ productType, colors, pattern, options,
 }) {
   const Model = MODEL_MAP[productType] || TShirt3D;
   const onBody = !!showBody;
-  const wy = onBody ? (WEAR_OFFSET[productType] ?? 0) : 0;
   return (
     <Canvas
       camera={{ position: [0, 0, 7], fov: 42 }}
@@ -2246,9 +2376,9 @@ export default function Product3DViewer({ productType, colors, pattern, options,
           {/* On-body view shrinks + lifts the whole rig so the full figure frames cleanly */}
           <group scale={onBody ? 0.65 : 1} position={onBody ? [0, 0.36, 0] : [0, 0, 0]}>
             {onBody && <Mannequin gender={bodyGender === "female" ? "female" : "male"}/>}
-            <group position={[0, wy, 0]}>
-              <Model colors={colors} pattern={pattern} options={options}/>
-            </group>
+            {onBody
+              ? <WornModel productType={productType} Model={Model} colors={colors} pattern={pattern} options={options}/>
+              : <Model colors={colors} pattern={pattern} options={options}/>}
           </group>
         </RotatingModel>
         <ContactShadows position={[0, onBody ? -2.5 : -3.5, 0]} opacity={0.6} scale={16} blur={2.6} resolution={1024} far={5}/>
