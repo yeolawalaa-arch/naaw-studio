@@ -19,7 +19,15 @@ function optionsSchemaText(product: string): string {
 }
 
 export async function POST(req: NextRequest) {
+ try {
   const { prompt, product } = await req.json();
+
+  if (!process.env.GROQ_API_KEY) {
+    return NextResponse.json({ error: "AI abhi configure nahi hai (API key missing)" }, { status: 503 });
+  }
+  if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+    return NextResponse.json({ error: "Pehle kuch likho — design ka idea batao" }, { status: 400 });
+  }
 
   const optionsSchema = optionsSchemaText(product);
   const optionsBlock = optionsSchema ? `,
@@ -84,12 +92,13 @@ Only return valid JSON, nothing else. No markdown, no backticks.`,
 
   const text = completion.choices[0]?.message?.content || "";
 
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    const design = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-    if (!design) throw new Error("No JSON found");
-    return NextResponse.json(design);
-  } catch {
-    return NextResponse.json({ error: "Design generate nahi hua, dobara try karo" }, { status: 500 });
-  }
+  // Strip any markdown fences then grab the JSON object.
+  const cleaned = text.replace(/```json|```/gi, "");
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  const design = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+  if (!design) throw new Error("No JSON found");
+  return NextResponse.json(design);
+ } catch {
+  return NextResponse.json({ error: "Design generate nahi hua, dobara try karo" }, { status: 500 });
+ }
 }

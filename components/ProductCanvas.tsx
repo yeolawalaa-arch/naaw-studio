@@ -54,16 +54,15 @@ const products: Record<ProductType, React.ComponentType<{colors: ProductColors; 
   "joggers":      dynamic(() => import("./products/Joggers")),
   "jeans":        dynamic(() => import("./products/Jeans")),
   "saree":        dynamic(() => import("./products/Saree")),
-  // Traditional wear — 3D only, show prompt in 2D view
-  "lehenga": () => <AccessoryPrompt label="Lehenga"/>,
-  "anarkali": () => <AccessoryPrompt label="Anarkali Suit"/>,
-  "salwar-kameez": () => <AccessoryPrompt label="Salwar Kameez"/>,
-  "kurti": () => <AccessoryPrompt label="Kurti"/>,
-  "kurta": () => <AccessoryPrompt label="Kurta"/>,
-  "sherwani": () => <AccessoryPrompt label="Sherwani"/>,
-  "nehru-jacket": () => <AccessoryPrompt label="Nehru Jacket"/>,
-  "pathani": () => <AccessoryPrompt label="Pathani Suit"/>,
-  "dhoti": () => <AccessoryPrompt label="Dhoti"/>,
+  "lehenga":      dynamic(() => import("./products/Lehenga")),
+  "anarkali":     dynamic(() => import("./products/Anarkali")),
+  "salwar-kameez":dynamic(() => import("./products/SalwarKameez")),
+  "kurti":        dynamic(() => import("./products/Kurti")),
+  "kurta":        dynamic(() => import("./products/Kurta")),
+  "sherwani":     dynamic(() => import("./products/Sherwani")),
+  "nehru-jacket": dynamic(() => import("./products/NehruJacket")),
+  "pathani":      dynamic(() => import("./products/Pathani")),
+  "dhoti":        dynamic(() => import("./products/Dhoti")),
   "sneaker-low":  dynamic(() => import("./products/SneakerLow")),
   "sneaker-high": dynamic(() => import("./products/SneakerHigh")),
   "boot":         dynamic(() => import("./products/Boot")),
@@ -74,30 +73,17 @@ const products: Record<ProductType, React.ComponentType<{colors: ProductColors; 
   "bucket-hat":   dynamic(() => import("./products/BucketHat")),
   "backpack":     dynamic(() => import("./products/Backpack")),
   "tote":         dynamic(() => import("./products/Tote")),
-  // Accessories — 3D only, show prompt in 2D view
-  "watch": () => <AccessoryPrompt label="Watch"/>,
-  "sunglasses": () => <AccessoryPrompt label="Sunglasses"/>,
-  "belt": () => <AccessoryPrompt label="Belt"/>,
-  "chain": () => <AccessoryPrompt label="Chain"/>,
-  "wallet": () => <AccessoryPrompt label="Wallet"/>,
-  "scarf": () => <AccessoryPrompt label="Scarf"/>,
-  "socks": () => <AccessoryPrompt label="Socks"/>,
-  "phone-case": () => <AccessoryPrompt label="Phone Case"/>,
-  "ring": () => <AccessoryPrompt label="Ring"/>,
-  "earrings": () => <AccessoryPrompt label="Earrings"/>,
+  "watch":        dynamic(() => import("./products/Watch")),
+  "sunglasses":   dynamic(() => import("./products/Sunglasses")),
+  "belt":         dynamic(() => import("./products/Belt")),
+  "chain":        dynamic(() => import("./products/Chain")),
+  "wallet":       dynamic(() => import("./products/Wallet")),
+  "scarf":        dynamic(() => import("./products/Scarf")),
+  "socks":        dynamic(() => import("./products/Socks")),
+  "phone-case":   dynamic(() => import("./products/PhoneCase")),
+  "ring":         dynamic(() => import("./products/Ring")),
+  "earrings":     dynamic(() => import("./products/Earrings")),
 };
-
-function AccessoryPrompt({ label }: { label: string }) {
-  return (
-    <div className="w-full flex items-center justify-center" style={{ background: "#111", aspectRatio: "1/1" }}>
-      <div className="text-center">
-        <p className="text-white/20 text-4xl mb-3">✦</p>
-        <p className="text-white/50 text-sm font-bold">{label}</p>
-        <p className="text-white/25 text-xs mt-1">Switch to 3D Live Preview to see this product</p>
-      </div>
-    </div>
-  );
-}
 
 export default function ProductCanvas({ productType, colors, pattern, textOverlay, printImage, patternIntensity, patternZone }: {
   productType: ProductType;

@@ -9,6 +9,17 @@ import { PRODUCT_OPTIONS, defaultOptions, sanitizeOptions, PRINTABLE } from "../
 const ProductCanvas = dynamic(() => import("../../components/ProductCanvas"), { ssr: false });
 const Product3DViewer = dynamic(() => import("../../components/Product3DViewer"), { ssr: false });
 
+// Mannequin poses (kept local so the heavy 3D module stays lazy-loaded).
+type Pose = "stand" | "relaxed" | "walk" | "hips" | "tpose" | "handsup";
+const POSE_OPTS: { id: Pose; label: string }[] = [
+  { id: "stand", label: "Stand" },
+  { id: "relaxed", label: "Relaxed" },
+  { id: "walk", label: "Walk" },
+  { id: "hips", label: "Hips" },
+  { id: "tpose", label: "T-Pose" },
+  { id: "handsup", label: "Hands Up" },
+];
+
 // Free plan: only these 5 products
 const FREE_PRODUCTS: ProductType[] = ["tshirt", "hoodie", "sneaker-low", "cap", "tote"];
 
@@ -280,13 +291,14 @@ export default function StudioPage() {
   const [options, setOptions] = useState<Record<string, string>>(() => defaultOptions("tshirt"));
   const [printImage, setPrintImage] = useState<{ src: string; x: number; y: number; scale: number; opacity: number } | null>(null);
   const [bodyMode, setBodyMode] = useState<"none" | "male" | "female">("none");
+  const [pose, setPose] = useState<Pose>("stand");
 
   const productLabel = PRODUCTS.find(p => p.type === product)?.label ?? "";
   const productCategory = PRODUCTS.find(p => p.type === product)?.category ?? "";
   const productAudience = PRODUCTS.find(p => p.type === product)?.audience;
   const canPrint = PRINTABLE.has(product);
-  // Clothing categories that can be previewed on a 3D human model
-  const canWear = ["Tops", "Bottoms", "Traditional"].includes(productCategory);
+  // Every product can now be previewed worn/held on the 3D human model.
+  const canWear = !!productCategory;
 
   // Unisex = show all. Men hides women-only items; Women hides men-only items.
   const matchesGender = (a?: Audience) =>
@@ -347,9 +359,6 @@ export default function StudioPage() {
     setProduct(type);
     setOptions(defaultOptions(type));
     if (THREE_D_ONLY.has(type)) setView3D(true);
-    // The "on model" preview only applies to clothing — clear it for accessories/shoes/etc.
-    const nextCategory = PRODUCTS.find(p => p.type === type)?.category ?? "";
-    if (!["Tops", "Bottoms", "Traditional"].includes(nextCategory)) setBodyMode("none");
   };
 
   const handlePrintUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -726,11 +735,24 @@ export default function StudioPage() {
             </div>
           )}
 
+          {/* ── Pose the model (legs / arms / body) ── */}
+          {view3D && canWear && bodyMode !== "none" && (
+            <div className="flex items-center justify-center flex-wrap gap-1.5 px-6 pt-2">
+              <span className="text-[10px] text-white/35 uppercase tracking-widest mr-1">Pose</span>
+              {POSE_OPTS.map(p => (
+                <button key={p.id} onClick={() => setPose(p.id)}
+                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition ${pose === p.id ? "bg-emerald-400 text-black" : "bg-white/10 text-white/55 hover:bg-white/15"}`}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex-1 flex items-center justify-center p-6">
             {view3D ? (
               <div className="w-full max-w-3xl" style={{ height: "min(640px, 72vh)" }}>
                 <Product3DViewer productType={product} colors={colors} pattern={pattern} options={options}
-                  showBody={canWear && bodyMode !== "none"} bodyGender={bodyMode === "female" ? "female" : "male"}/>
+                  showBody={canWear && bodyMode !== "none"} bodyGender={bodyMode === "female" ? "female" : "male"} pose={pose}/>
                 <p className="text-center text-white/25 text-[10px] mt-2">
                   {canWear && bodyMode !== "none"
                     ? `Worn on ${bodyMode === "female" ? "woman" : "man"} model · Drag to rotate`

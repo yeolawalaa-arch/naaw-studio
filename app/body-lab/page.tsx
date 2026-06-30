@@ -74,8 +74,11 @@ const GROUPS: { id: string; name: string; tiles: Tile[] }[] = [
   },
 ];
 
+const POSES = ["stand", "relaxed", "walk", "hips", "tpose", "handsup"] as const;
+
 export default function BodyLab() {
   const [gid, setGid] = useState("garments");
+  const [pose, setPose] = useState<(typeof POSES)[number]>("stand");
   const group = GROUPS.find((x) => x.id === gid) || GROUPS[0];
   return (
     <div style={{ minHeight: "100vh", background: "#000", padding: 12 }}>
@@ -98,6 +101,25 @@ export default function BodyLab() {
           </button>
         ))}
       </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+        {POSES.map((p) => (
+          <button
+            key={p}
+            onClick={() => setPose(p)}
+            style={{
+              color: p === pose ? "#000" : "#fff",
+              background: p === pose ? "#4ade80" : "#1a1a1a",
+              font: "600 12px system-ui, sans-serif",
+              padding: "5px 11px",
+              borderRadius: 8,
+              cursor: "pointer",
+              border: "1px solid #333",
+            }}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
         {group.tiles.map((t) => (
           <div key={t.label} style={{ background: "#0d0d0d", borderRadius: 12, overflow: "hidden", border: "1px solid #222" }}>
@@ -110,6 +132,7 @@ export default function BodyLab() {
                 options={defaultOptions(t.product)}
                 showBody
                 bodyGender={t.gender}
+                pose={pose}
               />
             </div>
           </div>

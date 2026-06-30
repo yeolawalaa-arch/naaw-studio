@@ -452,6 +452,40 @@ function RotatingModel({ children, still }: { children: React.ReactNode; still?:
   return <group ref={ref}>{children}</group>;
 }
 
+// ── NAAW brand wordmark, drawn to a transparent canvas texture and applied as a
+//    flat print decal. Cached per colour so we don't rebuild the texture each frame. ──
+const _brandTexCache: Record<string, THREE.CanvasTexture> = {};
+function brandTexture(color: string): THREE.CanvasTexture {
+  if (_brandTexCache[color]) return _brandTexCache[color];
+  const w = 512, h = 192;
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const ctx = c.getContext("2d")!;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = color;
+  ctx.font = "900 120px Arial, Helvetica, sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  // letter-spaced wordmark
+  const letters = "NAAW".split("");
+  const gap = 92;
+  const startX = w / 2 - (gap * (letters.length - 1)) / 2;
+  letters.forEach((ch, i) => ctx.fillText(ch, startX + i * gap, h / 2 + 4));
+  const tex = new THREE.CanvasTexture(c);
+  tex.anisotropy = 8; tex.needsUpdate = true;
+  _brandTexCache[color] = tex;
+  return tex;
+}
+function BrandMark({ position, rotation, width = 0.85, color = "#F5F5F5", opacity = 0.95 }: {
+  position: [number, number, number]; rotation?: [number, number, number]; width?: number; color?: string; opacity?: number;
+}) {
+  const tex = useMemo(() => brandTexture(color), [color]);
+  return (
+    <mesh position={position} rotation={rotation}>
+      <planeGeometry args={[width, width * 0.375]} />
+      <meshStandardMaterial map={tex} transparent alphaTest={0.25} opacity={opacity} roughness={0.5} metalness={0} depthWrite={false} />
+    </mesh>
+  );
+}
+
 // ─────────────────────────────────────────────
 // CHUNKY SOLE UNIT — thick stacked midsole + treaded outsole + bulbous toe bumper.
 // Shared by the low & high sneakers so both sit on a real, chunky platform.
@@ -694,6 +728,7 @@ function TShirt3D({ colors, pattern, options }: { colors: ProductColors; pattern
     <group>
       {/* Body */}
       <RoundedBox args={[2.85, bodyH, 0.14]} radius={0.08} position={[0,bodyY,0]} material={mat}/>
+      <BrandMark position={[0, 0.95, 0.1]} width={0.85}/>
       {/* Sleeves */}
       {sleeve !== "sleeveless" && <>
         <RoundedBox args={[1.25, sl.h, 0.12]} radius={0.06} position={[-2.0,sl.y,0]} rotation={[0,0,0.32]} material={dark}/>
@@ -738,6 +773,7 @@ function Hoodie3D({ colors, pattern, options }: { colors: ProductColors; pattern
   return (
     <group>
       <RoundedBox args={[2.95, 3.5, 0.16]} radius={0.08} position={[0,-0.1,0]} material={mat}/>
+      <BrandMark position={[0, 1.0, 0.11]} width={0.85}/>
       <RoundedBox args={[1.28, 1.15, 0.14]} radius={0.06} position={[-1.88,0.78,0]} rotation={[0,0,0.32]} material={mat}/>
       <RoundedBox args={[1.28, 1.15, 0.14]} radius={0.06} position={[1.88,0.78,0]} rotation={[0,0,-0.32]} material={mat}/>
       {/* Hood */}
@@ -772,6 +808,7 @@ function Shirt3D({ colors, pattern, options }: { colors: ProductColors; pattern:
   return (
     <group>
       <RoundedBox args={[2.85, 3.55, 0.12]} radius={0.06} position={[0,-0.1,0]} material={mat}/>
+      <BrandMark position={[-0.55, 1.15, 0.09]} width={0.5}/>
       <RoundedBox args={[1.2, 1.08, 0.10]} radius={0.05} position={[-1.75,0.82,0]} rotation={[0,0,0.28]} material={mat}/>
       <RoundedBox args={[1.2, 1.08, 0.10]} radius={0.05} position={[1.75,0.82,0]} rotation={[0,0,-0.28]} material={mat}/>
       {/* Collar left and right flaps */}
@@ -799,6 +836,7 @@ function Polo3D({ colors, pattern, options }: { colors: ProductColors; pattern: 
   return (
     <group>
       <RoundedBox args={[2.85, 3.5, 0.12]} radius={0.07} position={[0,-0.1,0]} material={mat}/>
+      <BrandMark position={[-0.52, 1.18, 0.09]} width={0.45}/>
       <RoundedBox args={[1.22, 1.05, 0.10]} radius={0.05} position={[-1.72,0.85,0]} rotation={[0,0,0.3]} material={mat}/>
       <RoundedBox args={[1.22, 1.05, 0.10]} radius={0.05} position={[1.72,0.85,0]} rotation={[0,0,-0.3]} material={mat}/>
       {/* Polo collar - flat two-layer */}
@@ -825,6 +863,7 @@ function Jacket3D({ colors, pattern, options }: { colors: ProductColors; pattern
   return (
     <group>
       <RoundedBox args={[2.95, 3.55, 0.18]} radius={0.09} position={[0,-0.1,0]} material={mat}/>
+      <BrandMark position={[-0.6, 1.2, 0.12]} width={0.55}/>
       <RoundedBox args={[1.28, 1.2, 0.16]} radius={0.07} position={[-1.9,0.72,0]} rotation={[0,0,0.26]} material={mat}/>
       <RoundedBox args={[1.28, 1.2, 0.16]} radius={0.07} position={[1.9,0.72,0]} rotation={[0,0,-0.26]} material={mat}/>
       {/* Lapels */}
@@ -852,6 +891,7 @@ function Bomber3D({ colors, pattern, options }: { colors: ProductColors; pattern
   return (
     <group>
       <RoundedBox args={[3.0, 3.0, 0.2]} radius={0.1} position={[0,0.1,0]} material={mat}/>
+      <BrandMark position={[0, 0.95, 0.14]} width={0.8}/>
       <RoundedBox args={[1.3, 1.15, 0.18]} radius={0.07} position={[-1.95,0.65,0]} rotation={[0,0,0.28]} material={mat}/>
       <RoundedBox args={[1.3, 1.15, 0.18]} radius={0.07} position={[1.95,0.65,0]} rotation={[0,0,-0.28]} material={mat}/>
       {/* Ribbed hem */}
@@ -2295,11 +2335,37 @@ function Kurti3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 // MODEL MAP
 // ─────────────────────────────────────────────
 // ─────────────────────────────────────────────
+// MANNEQUIN POSES — the figure is articulated (shoulder→elbow, hip→knee) so it can
+// be posed. Each preset is a set of joint angles (radians). The studio exposes these
+// as buttons so the user can move the legs / arms / body.
+// ─────────────────────────────────────────────
+export type MannequinPose = "stand" | "relaxed" | "walk" | "hips" | "tpose" | "handsup";
+export const POSE_LIST: { id: MannequinPose; label: string }[] = [
+  { id: "stand",   label: "Stand" },
+  { id: "relaxed", label: "Relaxed" },
+  { id: "walk",    label: "Walk" },
+  { id: "hips",    label: "Hands on Hips" },
+  { id: "tpose",   label: "T-Pose" },
+  { id: "handsup", label: "Hands Up" },
+];
+type PoseAngles = { armRaise: number; armFwd: number; elbow: number; legSpread: number; legStep: number; knee: number };
+const POSES: Record<string, PoseAngles> = {
+  stand:   { armRaise: 0,    armFwd: 0,    elbow: 0,    legSpread: 0,    legStep: 0,    knee: 0 },
+  relaxed: { armRaise: 0.12, armFwd: 0.14, elbow: 0.28, legSpread: 0.07, legStep: 0.14, knee: 0.22 },
+  walk:    { armRaise: 0.05, armFwd: 0.55, elbow: 0.32, legSpread: 0.04, legStep: 0.5,  knee: 0.4 },
+  hips:    { armRaise: 1.0,  armFwd: 0.1,  elbow: 1.55, legSpread: 0.14, legStep: 0,    knee: 0 },
+  tpose:   { armRaise: 1.75, armFwd: 0,    elbow: 0,    legSpread: 0.06, legStep: 0,    knee: 0 },
+  handsup: { armRaise: 2.9,  armFwd: 0.12, elbow: 0.18, legSpread: 0.09, legStep: 0,    knee: 0 },
+};
+const STAND = POSES.stand;
+
+// ─────────────────────────────────────────────
 // MANNEQUIN — procedural male / female body so garments can be previewed "worn".
 // The torso is flattened + recessed so the (largely flat) garment shells cover it,
 // while head, arms and legs keep full volume so the figure reads as a real person.
+// Arms/legs are articulated so the figure can be posed (see POSES).
 // ─────────────────────────────────────────────
-function Mannequin({ gender, bareTorso }: { gender: "male" | "female"; bareTorso?: boolean }) {
+function Mannequin({ gender, bareTorso, pose = STAND }: { gender: "male" | "female"; bareTorso?: boolean; pose?: PoseAngles }) {
   const female = gender === "female";
   // Skin: matte + low env reflection so studio lighting doesn't make it plasticky.
   const skin = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(female ? "#E8BE9C" : "#D7A684"), roughness: 0.78, metalness: 0, envMapIntensity: 0.45 }), [female]);
@@ -2373,38 +2439,55 @@ function Mannequin({ gender, bareTorso }: { gender: "male" | "female"; bareTorso
       </group>
       {/* Pelvis */}
       <Sphere args={[hipR*0.86, 24, 24]} position={[0, -1.05, -0.18]} scale={[1, 0.78, 0.5]} material={skin}/>
-      {/* Arms (slight A-pose splay; set back so a top's panel covers the upper arm) */}
-      {[-1, 1].map((sgn) => (
-        <group key={sgn} position={[sgn*(shoulderR+0.04), 1.72, -0.16]} rotation={[0, 0, -sgn*0.18]}>
+      {/* Arms — articulated shoulder → elbow. Base A-pose splay (-sgn*0.18) plus the
+          pose's shoulder raise (z) and forward swing (x, contralateral for a stride). */}
+      {[-1, 1].map((sgn) => {
+        const shoZ = -sgn * 0.18 + sgn * pose.armRaise;
+        const shoX = sgn * pose.armFwd;
+        return (
+        <group key={sgn} position={[sgn*(shoulderR+0.04), 1.72, -0.16]} rotation={[shoX, 0, shoZ]}>
           <Sphere args={[armR*1.2, 18, 18]} material={skin}/>
           <Cylinder args={[armR, armR*0.9, 1.3, 18]} position={[0, -0.66, 0]} material={skin}/>
-          <Sphere args={[armR*0.95, 16, 16]} position={[0, -1.32, 0]} material={skin}/>
-          <Cylinder args={[armR*0.88, armR*0.74, 1.2, 18]} position={[0, -1.95, 0]} material={skin}/>
-          <group position={[0, -2.65, 0]}>
-            {/* palm */}
-            <mesh position={[0,0.12,0]} scale={[1, 1.1, 0.46]} material={skin}><sphereGeometry args={[armR*1.05, 18, 18]}/></mesh>
-            {/* fingers */}
-            <RoundedBox args={[armR*1.7, 0.6, armR*0.72]} radius={armR*0.32} position={[0,-0.42,0]} material={skin}/>
-            {/* thumb */}
-            <mesh position={[sgn*armR*0.82, 0.04, 0.05]} rotation={[0,0,sgn*0.6]} scale={[0.5,0.92,0.42]} material={skin}><sphereGeometry args={[armR*0.58, 12, 12]}/></mesh>
+          {/* elbow joint */}
+          <group position={[0, -1.32, 0]} rotation={[pose.elbow, 0, 0]}>
+            <Sphere args={[armR*0.95, 16, 16]} material={skin}/>
+            <Cylinder args={[armR*0.88, armR*0.74, 1.2, 18]} position={[0, -0.63, 0]} material={skin}/>
+            <group position={[0, -1.33, 0]}>
+              {/* palm */}
+              <mesh position={[0,0.12,0]} scale={[1, 1.1, 0.46]} material={skin}><sphereGeometry args={[armR*1.05, 18, 18]}/></mesh>
+              {/* fingers */}
+              <RoundedBox args={[armR*1.7, 0.6, armR*0.72]} radius={armR*0.32} position={[0,-0.42,0]} material={skin}/>
+              {/* thumb */}
+              <mesh position={[sgn*armR*0.82, 0.04, 0.05]} rotation={[0,0,sgn*0.6]} scale={[0.5,0.92,0.42]} material={skin}><sphereGeometry args={[armR*0.58, 12, 12]}/></mesh>
+            </group>
           </group>
         </group>
-      ))}
-      {/* Legs */}
-      {[-1, 1].map((sgn) => (
-        <group key={sgn} position={[sgn*0.46, -1.1, 0]}>
+        );
+      })}
+      {/* Legs — articulated hip → knee. Pose spreads (z), steps (x, contralateral to
+          the arms) and bends the rear knee for a natural stride. */}
+      {[-1, 1].map((sgn) => {
+        const hipZ = sgn * pose.legSpread;
+        const hipX = -sgn * pose.legStep;
+        const kneeBend = sgn > 0 ? pose.knee : pose.knee * 0.25;
+        return (
+        <group key={sgn} position={[sgn*0.46, -1.1, 0]} rotation={[hipX, 0, hipZ]}>
           <Sphere args={[legR*1.05, 18, 18]} material={skin}/>
           <Cylinder args={[legR, legR*0.85, 1.55, 20]} position={[0, -0.85, 0]} material={skin}/>
-          <Sphere args={[legR*0.8, 16, 16]} position={[0, -1.6, 0]} material={skin}/>
-          <Cylinder args={[legR*0.82, legR*0.5, 1.5, 20]} position={[0, -2.35, 0]} material={skin}/>
-          {/* ankle */}
-          <mesh position={[0,-3.02,0]} material={skin}><sphereGeometry args={[legR*0.52,16,16]}/></mesh>
-          {/* foot (toe forward +Z) */}
-          <mesh position={[0, -3.14, 0.32]} scale={[1, 0.5, 2.05]} material={skin}><sphereGeometry args={[legR*0.72, 16, 16]}/></mesh>
-          {/* heel */}
-          <mesh position={[0,-3.1,-0.16]} scale={[1,0.66,0.95]} material={skin}><sphereGeometry args={[legR*0.5,12,12]}/></mesh>
+          {/* knee joint */}
+          <group position={[0, -1.6, 0]} rotation={[kneeBend, 0, 0]}>
+            <Sphere args={[legR*0.8, 16, 16]} material={skin}/>
+            <Cylinder args={[legR*0.82, legR*0.5, 1.5, 20]} position={[0, -0.75, 0]} material={skin}/>
+            {/* ankle */}
+            <mesh position={[0,-1.42,0]} material={skin}><sphereGeometry args={[legR*0.52,16,16]}/></mesh>
+            {/* foot (toe forward +Z) */}
+            <mesh position={[0, -1.54, 0.32]} scale={[1, 0.5, 2.05]} material={skin}><sphereGeometry args={[legR*0.72, 16, 16]}/></mesh>
+            {/* heel */}
+            <mesh position={[0,-1.5,-0.16]} scale={[1,0.66,0.95]} material={skin}><sphereGeometry args={[legR*0.5,12,12]}/></mesh>
+          </group>
         </group>
-      ))}
+        );
+      })}
     </group>
   );
 }
@@ -2434,6 +2517,14 @@ const TORSO_GARMENTS = new Set<string>([
   "tshirt", "shirt", "polo", "hoodie", "jacket", "bomber",
   "saree", "lehenga", "anarkali", "salwar-kameez", "kurti",
   "kurta", "sherwani", "nehru-jacket", "pathani",
+]);
+
+// Products that cover the legs → the leg pose is suppressed so the limbs don't poke
+// out of a skirt / trousers. (Bottoms + full-length traditional wear.)
+const LEG_GARMENTS = new Set<string>([
+  "shorts", "joggers", "jeans", "dhoti",
+  "saree", "lehenga", "anarkali", "salwar-kameez",
+  "kurti", "kurta", "sherwani", "pathani",
 ]);
 
 // On-body placement (in mannequin-space units, the coord system shared by the
@@ -2519,12 +2610,24 @@ function WornModel({ productType, Model, colors, pattern, options }: {
   );
 }
 
-export default function Product3DViewer({ productType, colors, pattern, options, showBody, bodyGender, still }: {
+export default function Product3DViewer({ productType, colors, pattern, options, showBody, bodyGender, still, pose }: {
   productType: string; colors: ProductColors; pattern: string; options?: Record<string, string>;
-  showBody?: boolean; bodyGender?: "male" | "female"; still?: boolean;
+  showBody?: boolean; bodyGender?: "male" | "female"; still?: boolean; pose?: MannequinPose;
 }) {
   const Model = MODEL_MAP[productType] || TShirt3D;
   const onBody = !!showBody;
+  // Resolve the pose, suppressing arm angles when a top has sleeves and leg angles
+  // when a garment covers the legs, so worn clothes never detach from the limbs.
+  const effPose = useMemo(() => {
+    const base = POSES[pose || "stand"] || STAND;
+    const armsBare = !TORSO_GARMENTS.has(productType);
+    const legsBare = !LEG_GARMENTS.has(productType);
+    return {
+      ...base,
+      ...(armsBare ? {} : { armRaise: 0, armFwd: 0, elbow: 0 }),
+      ...(legsBare ? {} : { legSpread: 0, legStep: 0, knee: 0 }),
+    };
+  }, [pose, productType]);
   return (
     <Canvas
       camera={{ position: [0, 0, 7], fov: 42 }}
@@ -2545,7 +2648,7 @@ export default function Product3DViewer({ productType, colors, pattern, options,
         <RotatingModel still={still || onBody}>
           {/* On-body view shrinks + lifts the whole rig so the full figure frames cleanly */}
           <group scale={onBody ? 0.65 : 1} position={onBody ? [0, 0.36, 0] : [0, 0, 0]}>
-            {onBody && <Mannequin gender={bodyGender === "female" ? "female" : "male"} bareTorso={!TORSO_GARMENTS.has(productType)}/>}
+            {onBody && <Mannequin gender={bodyGender === "female" ? "female" : "male"} bareTorso={!TORSO_GARMENTS.has(productType)} pose={effPose}/>}
             {onBody
               ? <WornModel productType={productType} Model={Model} colors={colors} pattern={pattern} options={options}/>
               : <Model colors={colors} pattern={pattern} options={options}/>}
