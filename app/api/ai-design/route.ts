@@ -4,12 +4,17 @@ import { PRODUCT_OPTIONS } from "../../../lib/productOptions";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
 
-// Build a compact schema of this product's configurable options for the LLM
+// Build a detailed schema of this product's configurable options for the LLM.
+// Each choice is emitted as `id (Label)` so the model can map a natural-language
+// phrase ("fold 7", "jhumka", "satin") to the exact lowercase option id.
 function optionsSchemaText(product: string): string {
   const opts = PRODUCT_OPTIONS[product];
   if (!opts || opts.length === 0) return "";
   return opts
-    .map(o => `    "${o.id}": one of [${o.choices.map(c => c.id).join(", ")}]  // ${o.label}`)
+    .map(o => {
+      const choices = o.choices.map(c => `${c.id} (${c.label})`).join(", ");
+      return `    "${o.id}": one of [${choices}]  // ${o.label}, default ${o.default}`;
+    })
     .join("\n");
 }
 
@@ -23,14 +28,31 @@ ${optionsSchema}
   }` : "";
   const optionsGuide = optionsSchema ? `
 
-For "options", pick the value from each list that best fits the user's request and the overall vibe — real materials and finishes that suit a ${product} (metal, glass/lens, fabric, sole, gem, etc.). Use ONLY the exact lowercase values shown in the lists above; never invent new ones.` : "";
+OPTIONS RULES (very important):
+- For "options", choose the value from each list that best fits the request and the overall vibe — real materials, finishes and silhouettes that suit a ${product} (metal, gem, fabric, sole, lens, phone model, etc.).
+- Use ONLY the exact lowercase ids shown before each parenthesis. Never invent new ids and never output the label text.
+- HONOUR EXPLICIT COMMANDS. If the user explicitly names a model, material, shape or finish, you MUST map it to the matching id even if it changes the default. Match loosely on the Label text and common nicknames:
+    • "fold 7" / "z fold" / "samsung fold" → galaxy-z-fold-7
+    • "flip 6" / "z flip" → galaxy-z-flip-6
+    • "16 pro max" / "iphone 16 pro max" → iphone-16-pro-max
+    • "s25 ultra" → galaxy-s25-ultra
+    • "pixel" → pixel-9-pro
+    • "jhumka", "chandbali", "hoop", "stud" → the earring style id of the same name
+    • "satin", "velvet", "silk", "kanjivaram", "linen" → the fabric id of the same name
+    • "gold", "rose gold", "silver", "platinum" → the metal id of the same name
+- If the user asks to "change X to Y" or "Y kar de" / "Y mein badal", treat Y as an explicit command and set the matching option id.
+- Only fall back to a vibe-based pick for options the user did not explicitly mention.` : "";
 
   const completion = await groq.chat.completions.create({
-    model: "llama-3.1-8b-instant",
+    model: "llama-3.3-70b-versatile",
     messages: [
       {
+        role: "system",
+        content: `You are a senior fashion, streetwear and product design expert who configures a 3D product studio. You translate a customer's free-text brief (often Hinglish — a mix of Hindi and English) into a precise design spec. You are meticulous: when the customer explicitly names a material, colour, model or silhouette you always honour it exactly. You only ever output a single valid JSON object — no markdown, no backticks, no commentary.`,
+      },
+      {
         role: "user",
-        content: `You are a fashion and streetwear design expert. The user wants to design a ${product || "product"} and says: "${prompt}"
+        content: `The user wants to design a ${product || "product"} and says: "${prompt}"
 
 Return a JSON object with these exact fields:
 {
@@ -56,8 +78,8 @@ Color guide:
 Only return valid JSON, nothing else. No markdown, no backticks.`,
       },
     ],
-    temperature: 0.8,
-    max_tokens: 600,
+    temperature: 0.7,
+    max_tokens: 800,
   });
 
   const text = completion.choices[0]?.message?.content || "";

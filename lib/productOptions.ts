@@ -35,6 +35,14 @@ export const METALS: Record<string, MetalSpec> = {
   graphite:    { color: "#3A3F44", metalness: 0.95, roughness: 0.38 },
   pewter:      { color: "#8E8E8E", metalness: 0.90, roughness: 0.34 },
   brass:       { color: "#C9A227", metalness: 1,    roughness: 0.26 },
+  "yellow-gold":{ color: "#E6BE45", metalness: 1,   roughness: 0.15 },
+  "antique-gold":{ color: "#9C7A2E", metalness: 0.95, roughness: 0.46 },
+  vermeil:     { color: "#E8C66A", metalness: 1,    roughness: 0.20 },
+  rhodium:     { color: "#F0F2F5", metalness: 1,    roughness: 0.07 },
+  sterling:    { color: "#D9DCE1", metalness: 1,    roughness: 0.16 },
+  oxidized:    { color: "#4A4E54", metalness: 0.92, roughness: 0.50 },
+  ruthenium:   { color: "#36393E", metalness: 0.95, roughness: 0.40 },
+  hematite:    { color: "#2B2D33", metalness: 1,    roughness: 0.22 },
 };
 
 // Non-metal frame / shell materials (acetate, plastic, wood…)
@@ -83,6 +91,23 @@ export const FABRICS: Record<string, FabricSpec> = {
   sherpa:    { roughness: 0.97, clearcoat: 0.0,  sheen: 0.0 },
   gabardine: { roughness: 0.70, clearcoat: 0.1,  sheen: 0.1 },
   modal:     { roughness: 0.55, clearcoat: 0.15, sheen: 0.3 },
+  crepe:     { roughness: 0.60, clearcoat: 0.1,  sheen: 0.2 },
+  chambray:  { roughness: 0.78, clearcoat: 0.05, sheen: 0.05 },
+  oxford:    { roughness: 0.80, clearcoat: 0.05, sheen: 0.05 },
+  poplin:    { roughness: 0.70, clearcoat: 0.1,  sheen: 0.1 },
+  pashmina:  { roughness: 0.85, clearcoat: 0.0,  sheen: 0.32 },
+  chanderi:  { roughness: 0.45, clearcoat: 0.3,  sheen: 0.5 },
+  tussar:    { roughness: 0.50, clearcoat: 0.2,  sheen: 0.42 },
+  kanjivaram:{ roughness: 0.30, clearcoat: 0.5,  sheen: 0.85, metalness: 0.22 },
+  "raw-silk":{ roughness: 0.50, clearcoat: 0.25, sheen: 0.45 },
+  tissue:    { roughness: 0.30, clearcoat: 0.45, sheen: 0.7,  metalness: 0.30 },
+  velour:    { roughness: 0.60, clearcoat: 0.15, sheen: 0.7 },
+  shearling: { roughness: 0.98, clearcoat: 0.0,  sheen: 0.0 },
+  boucle:    { roughness: 0.90, clearcoat: 0.0,  sheen: 0.12 },
+  lame:      { roughness: 0.25, clearcoat: 0.6,  sheen: 0.6,  metalness: 0.6 },
+  sequin:    { roughness: 0.30, clearcoat: 0.5,  sheen: 0.7,  metalness: 0.5 },
+  crochet:   { roughness: 0.85, clearcoat: 0.0,  sheen: 0.1 },
+  lace:      { roughness: 0.60, clearcoat: 0.2,  sheen: 0.3 },
 };
 
 export interface GemSpec { color: string; transmission: number; roughness: number; metalness: number }
@@ -106,6 +131,20 @@ export const GEMS: Record<string, GemSpec> = {
   jade:       { color: "#3E9B6E", transmission: 0.25, roughness: 0.18, metalness: 0.0 },
   moonstone:  { color: "#DDE6EC", transmission: 0.50, roughness: 0.10, metalness: 0.1 },
   "black-diamond": { color: "#1B1B1F", transmission: 0.20, roughness: 0.02, metalness: 0.2 },
+  spinel:     { color: "#C8385A", transmission: 0.58, roughness: 0.03, metalness: 0.0 },
+  kunzite:    { color: "#E6A8C8", transmission: 0.66, roughness: 0.03, metalness: 0.0 },
+  tourmaline: { color: "#2EA37A", transmission: 0.62, roughness: 0.03, metalness: 0.0 },
+  alexandrite:{ color: "#6B5B95", transmission: 0.60, roughness: 0.03, metalness: 0.0 },
+  "lapis-lazuli": { color: "#26619C", transmission: 0.0, roughness: 0.22, metalness: 0.15 },
+  coral:      { color: "#FF7F50", transmission: 0.0,  roughness: 0.30, metalness: 0.0 },
+  amber:      { color: "#C8821E", transmission: 0.55, roughness: 0.10, metalness: 0.0 },
+  "blue-topaz": { color: "#6FC3DF", transmission: 0.70, roughness: 0.02, metalness: 0.0 },
+  "smoky-quartz": { color: "#6B5645", transmission: 0.58, roughness: 0.04, metalness: 0.0 },
+  "rose-quartz":  { color: "#E7A6B6", transmission: 0.52, roughness: 0.08, metalness: 0.0 },
+  zircon:     { color: "#C9E6F0", transmission: 0.80, roughness: 0.02, metalness: 0.0 },
+  "tigers-eye": { color: "#A0701E", transmission: 0.0, roughness: 0.16, metalness: 0.35 },
+  malachite:  { color: "#1F7A52", transmission: 0.0,  roughness: 0.20, metalness: 0.1 },
+  sunstone:   { color: "#E0772E", transmission: 0.40, roughness: 0.14, metalness: 0.2 },
 };
 
 // Gem cuts → maps to a geometry choice in the viewer
@@ -148,22 +187,29 @@ const LENS_COLOR_CHOICES: OptionChoice[] = [
 
 // Reusable broad choice lists (all wired through METALS / GEMS / gemCutGeometry)
 const METAL_CHOICES: OptionChoice[] = [
-  M("gold","Gold"),M("silver","Silver"),M("rose-gold","Rose Gold"),M("white-gold","White Gold"),
-  M("platinum","Platinum"),M("gunmetal","Gunmetal"),M("black","Black"),M("titanium","Titanium"),
+  M("gold","Gold"),M("yellow-gold","Yellow Gold"),M("rose-gold","Rose Gold"),M("white-gold","White Gold"),
+  M("vermeil","Vermeil"),M("antique-gold","Antique Gold"),M("silver","Silver"),M("sterling","Sterling"),
+  M("rhodium","Rhodium"),M("platinum","Platinum"),M("titanium","Titanium"),M("gunmetal","Gunmetal"),
+  M("oxidized","Oxidized"),M("ruthenium","Ruthenium"),M("hematite","Hematite"),M("black","Black"),
   M("copper","Copper"),M("bronze","Bronze"),M("brass","Brass"),M("champagne","Champagne"),
   M("chrome","Chrome"),M("graphite","Graphite"),M("pewter","Pewter"),
 ];
 const GEM_CHOICES: OptionChoice[] = [
-  G("diamond","Diamond"),G("ruby","Ruby"),G("emerald","Emerald"),G("sapphire","Sapphire"),
-  G("amethyst","Amethyst"),G("topaz","Topaz"),G("aquamarine","Aquamarine"),G("citrine","Citrine"),
-  G("pearl","Pearl"),G("onyx","Onyx"),G("garnet","Garnet"),G("peridot","Peridot"),
-  G("tanzanite","Tanzanite"),G("opal","Opal"),G("turquoise","Turquoise"),G("morganite","Morganite"),
-  G("jade","Jade"),G("moonstone","Moonstone"),G("black-diamond","Black Diamond"),
+  G("diamond","Diamond"),G("black-diamond","Black Diamond"),G("ruby","Ruby"),G("emerald","Emerald"),
+  G("sapphire","Sapphire"),G("amethyst","Amethyst"),G("topaz","Topaz"),G("blue-topaz","Blue Topaz"),
+  G("aquamarine","Aquamarine"),G("citrine","Citrine"),G("pearl","Pearl"),G("onyx","Onyx"),
+  G("garnet","Garnet"),G("peridot","Peridot"),G("tanzanite","Tanzanite"),G("opal","Opal"),
+  G("turquoise","Turquoise"),G("morganite","Morganite"),G("jade","Jade"),G("moonstone","Moonstone"),
+  G("spinel","Spinel"),G("kunzite","Kunzite"),G("tourmaline","Tourmaline"),G("alexandrite","Alexandrite"),
+  G("lapis-lazuli","Lapis Lazuli"),G("coral","Coral"),G("amber","Amber"),G("smoky-quartz","Smoky Quartz"),
+  G("rose-quartz","Rose Quartz"),G("zircon","Zircon"),G("tigers-eye","Tiger's Eye"),G("malachite","Malachite"),
+  G("sunstone","Sunstone"),
 ];
 const CUT_CHOICES: OptionChoice[] = [
   F("round","Round"),F("princess","Princess"),F("emerald-cut","Emerald"),F("marquise","Marquise"),
   F("oval","Oval"),F("pear","Pear"),F("heart","Heart"),F("cushion","Cushion"),
   F("radiant","Radiant"),F("trillion","Trillion"),F("baguette","Baguette"),F("asscher","Asscher"),
+  F("cabochon","Cabochon"),F("rose-cut","Rose Cut"),F("briolette","Briolette"),F("hexagon","Hexagon"),F("kite","Kite"),
 ];
 
 // ──────────────────────────────────────────────────────────────
@@ -172,21 +218,22 @@ const CUT_CHOICES: OptionChoice[] = [
 export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
   // ── TOPS ──
   tshirt: [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["jersey","Jersey"],["linen","Linen"],["modal","Modal"],["silk","Silk"],["satin","Satin"],["velvet","Velvet"],["terry","Terry"]]),
-    { id: "neck", label: "Neckline", default: "crew", choices: [F("crew","Crew"),F("vneck","V-Neck"),F("scoop","Scoop")] },
-    { id: "sleeve", label: "Sleeve", default: "short", choices: [F("short","Short"),F("long","Long"),F("sleeveless","Sleeveless")] },
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["jersey","Jersey"],["linen","Linen"],["modal","Modal"],["silk","Silk"],["satin","Satin"],["velvet","Velvet"],["terry","Terry"],["chiffon","Chiffon"],["georgette","Georgette"],["lace","Lace"],["crochet","Crochet"],["crepe","Crepe"],["pashmina","Pashmina"]]),
+    { id: "neck", label: "Neckline", default: "crew", choices: [F("crew","Crew"),F("vneck","V-Neck"),F("scoop","Scoop"),F("boat","Boat"),F("square","Square")] },
+    { id: "sleeve", label: "Sleeve", default: "short", choices: [F("short","Short"),F("three-quarter","3/4"),F("long","Long"),F("cap","Cap"),F("sleeveless","Sleeveless")] },
+    { id: "length", label: "Length", default: "regular", choices: [F("crop","Crop"),F("regular","Regular"),F("long","Long")] },
   ],
   shirt: [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["linen","Linen"],["silk","Silk"],["satin","Satin"],["denim","Denim"],["twill","Twill"],["flannel","Flannel"],["corduroy","Corduroy"]]),
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["linen","Linen"],["silk","Silk"],["satin","Satin"],["denim","Denim"],["twill","Twill"],["flannel","Flannel"],["corduroy","Corduroy"],["chambray","Chambray"],["oxford","Oxford"],["poplin","Poplin"],["crepe","Crepe"]]),
     { id: "collar", label: "Collar", default: "classic", choices: [F("classic","Classic"),F("button-down","Button-Down"),F("mandarin","Mandarin")] },
     { id: "fit", label: "Fit", default: "regular", choices: [F("regular","Regular"),F("slim","Slim"),F("oversized","Oversized")] },
   ],
   polo: [
-    FABRIC_OPT("jersey", [["jersey","Pique"],["cotton","Cotton"],["modal","Modal"],["linen","Linen"],["silk","Silk"]]),
+    FABRIC_OPT("jersey", [["jersey","Pique"],["cotton","Cotton"],["modal","Modal"],["linen","Linen"],["silk","Silk"],["knit","Knit"],["oxford","Oxford"]]),
     { id: "collar", label: "Collar", default: "ribbed", choices: [F("ribbed","Ribbed"),F("flat","Flat")] },
   ],
   hoodie: [
-    FABRIC_OPT("fleece", [["fleece","Fleece"],["cotton","Cotton"],["terry","Terry"],["sherpa","Sherpa"],["jersey","Jersey"],["velvet","Velvet"]]),
+    FABRIC_OPT("fleece", [["fleece","Fleece"],["cotton","Cotton"],["terry","Terry"],["sherpa","Sherpa"],["jersey","Jersey"],["velvet","Velvet"],["boucle","Boucle"],["velour","Velour"]]),
     { id: "closure", label: "Closure", default: "pullover", choices: [F("pullover","Pullover"),F("zip","Full-Zip")] },
     { id: "pocket", label: "Pocket", default: "kangaroo", choices: [F("kangaroo","Kangaroo"),F("split","Split"),F("none","None")] },
   ],
@@ -222,34 +269,35 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
   // ── TRADITIONAL ──
   // Women
   saree: [
-    FABRIC_OPT("silk", [["silk","Silk"],["georgette","Georgette"],["chiffon","Chiffon"],["cotton","Cotton"],["satin","Satin"],["banarasi","Banarasi"],["organza","Organza"],["net","Net"]]),
-    { id: "border", label: "Border / Zari", default: "gold", choices: [M("gold","Gold Zari"),M("silver","Silver Zari"),M("copper","Copper"),M("bronze","Antique"),M("rose-gold","Rose Gold")] },
+    FABRIC_OPT("silk", [["silk","Silk"],["georgette","Georgette"],["chiffon","Chiffon"],["cotton","Cotton"],["satin","Satin"],["banarasi","Banarasi"],["kanjivaram","Kanjivaram"],["organza","Organza"],["net","Net"],["chanderi","Chanderi"],["tussar","Tussar"],["tissue","Tissue"],["velvet","Velvet"],["crepe","Crepe"]]),
+    { id: "border", label: "Border / Zari", default: "gold", choices: [M("gold","Gold Zari"),M("yellow-gold","Yellow Zari"),M("silver","Silver Zari"),M("copper","Copper"),M("bronze","Antique"),M("rose-gold","Rose Gold"),M("oxidized","Oxidized")] },
     { id: "drape", label: "Drape", default: "nivi", choices: [F("nivi","Nivi"),F("bengali","Bengali"),F("gujarati","Gujarati")] },
+    { id: "blouse", label: "Blouse Sleeve", default: "short", choices: [F("sleeveless","Sleeveless"),F("short","Short"),F("elbow","Elbow"),F("full","Full")] },
   ],
   lehenga: [
-    FABRIC_OPT("silk", [["silk","Silk"],["georgette","Georgette"],["velvet","Velvet"],["satin","Satin"],["net","Net"],["brocade","Brocade"],["organza","Organza"],["banarasi","Banarasi"]]),
-    { id: "border", label: "Zari Border", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("copper","Copper"),M("bronze","Antique"),M("rose-gold","Rose Gold")] },
+    FABRIC_OPT("silk", [["silk","Silk"],["georgette","Georgette"],["velvet","Velvet"],["satin","Satin"],["net","Net"],["brocade","Brocade"],["organza","Organza"],["banarasi","Banarasi"],["kanjivaram","Kanjivaram"],["tissue","Tissue"],["chanderi","Chanderi"],["sequin","Sequin"]]),
+    { id: "border", label: "Zari Border", default: "gold", choices: [M("gold","Gold"),M("yellow-gold","Yellow Gold"),M("silver","Silver"),M("copper","Copper"),M("bronze","Antique"),M("rose-gold","Rose Gold"),M("oxidized","Oxidized")] },
     { id: "flare", label: "Skirt Flare", default: "a-line", choices: [F("a-line","A-Line"),F("circular","Circular"),F("mermaid","Mermaid"),F("flared","Lehenga Flare")] },
     { id: "work", label: "Hand Work", default: "embroidered", choices: [F("plain","Plain"),F("embroidered","Embroidered"),F("mirror","Mirror"),F("sequined","Sequined")] },
     { id: "dupatta", label: "Dupatta", default: "yes", choices: [F("yes","With Dupatta"),F("no","No Dupatta")] },
   ],
   anarkali: [
-    FABRIC_OPT("georgette", [["georgette","Georgette"],["silk","Silk"],["chiffon","Chiffon"],["net","Net"],["satin","Satin"],["banarasi","Banarasi"],["velvet","Velvet"]]),
-    { id: "border", label: "Zari Border", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("copper","Copper"),M("rose-gold","Rose Gold")] },
+    FABRIC_OPT("georgette", [["georgette","Georgette"],["silk","Silk"],["chiffon","Chiffon"],["net","Net"],["satin","Satin"],["banarasi","Banarasi"],["velvet","Velvet"],["chanderi","Chanderi"],["tissue","Tissue"],["crepe","Crepe"],["organza","Organza"]]),
+    { id: "border", label: "Zari Border", default: "gold", choices: [M("gold","Gold"),M("yellow-gold","Yellow Gold"),M("silver","Silver"),M("copper","Copper"),M("rose-gold","Rose Gold"),M("oxidized","Oxidized")] },
     { id: "sleeve", label: "Sleeve", default: "long", choices: [F("long","Full"),F("three-quarter","3/4"),F("short","Short"),F("sleeveless","Sleeveless")] },
     { id: "length", label: "Length", default: "floor", choices: [F("floor","Floor"),F("ankle","Ankle"),F("knee","Knee Frock")] },
     { id: "dupatta", label: "Dupatta", default: "yes", choices: [F("yes","With Dupatta"),F("no","No Dupatta")] },
   ],
   "salwar-kameez": [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["silk","Silk"],["georgette","Georgette"],["chiffon","Chiffon"],["linen","Linen"],["satin","Satin"]]),
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["silk","Silk"],["georgette","Georgette"],["chiffon","Chiffon"],["linen","Linen"],["satin","Satin"],["modal","Modal"],["crepe","Crepe"],["chanderi","Chanderi"],["khadi","Khadi"]]),
     { id: "salwar", label: "Salwar Style", default: "patiala", choices: [F("patiala","Patiala"),F("straight","Straight"),F("churidar","Churidar"),F("palazzo","Palazzo")] },
     { id: "border", label: "Trim", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("copper","Copper"),C("tonal","Tonal","#8a6d3b")] },
     { id: "length", label: "Kameez Length", default: "regular", choices: [F("regular","Regular"),F("long","Long"),F("short","Short")] },
     { id: "dupatta", label: "Dupatta", default: "yes", choices: [F("yes","With Dupatta"),F("no","No Dupatta")] },
   ],
   kurti: [
-    FABRIC_OPT("cotton", [["cotton","Cotton"],["silk","Silk"],["linen","Linen"],["georgette","Georgette"],["chiffon","Chiffon"],["khadi","Khadi"],["velvet","Velvet"]]),
-    { id: "neck", label: "Neckline", default: "round", choices: [F("round","Round"),F("v","V-Neck"),F("boat","Boat"),F("keyhole","Keyhole")] },
+    FABRIC_OPT("cotton", [["cotton","Cotton"],["silk","Silk"],["linen","Linen"],["georgette","Georgette"],["chiffon","Chiffon"],["khadi","Khadi"],["velvet","Velvet"],["chanderi","Chanderi"],["modal","Modal"],["crepe","Crepe"],["lace","Lace"]]),
+    { id: "neck", label: "Neckline", default: "round", choices: [F("round","Round"),F("v","V-Neck"),F("boat","Boat"),F("square","Square"),F("collar","Collar"),F("keyhole","Keyhole")] },
     { id: "sleeve", label: "Sleeve", default: "three-quarter", choices: [F("three-quarter","3/4"),F("full","Full"),F("short","Short"),F("sleeveless","Sleeveless")] },
     { id: "length", label: "Length", default: "long", choices: [F("short","Short"),F("long","Long")] },
     { id: "bottom", label: "Bottom", default: "leggings", choices: [F("leggings","Leggings"),F("palazzo","Palazzo"),F("none","Tunic Only")] },
@@ -409,11 +457,14 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
     { id: "length", label: "Length", default: "crew", choices: [F("ankle","Ankle"),F("crew","Crew"),F("knee","Knee-High")] },
   ],
   "phone-case": [
-    { id: "phone", label: "Phone Model", default: "iphone-15-pro", choices: [
+    { id: "phone", label: "Phone Model", default: "iphone-16-pro", choices: [
+      F("iphone-16-pro-max","iPhone 16 Pro Max"),F("iphone-16-pro","iPhone 16 Pro"),
       F("iphone-15-pro-max","iPhone 15 Pro Max"),F("iphone-15-pro","iPhone 15 Pro"),
       F("iphone-15","iPhone 15"),F("iphone-se","iPhone SE"),
-      F("galaxy-s24-ultra","Galaxy S24 Ultra"),F("galaxy-s24","Galaxy S24"),
-      F("pixel-8-pro","Pixel 8 Pro"),F("oneplus-12","OnePlus 12") ] },
+      F("galaxy-s25-ultra","Galaxy S25 Ultra"),F("galaxy-s24-ultra","Galaxy S24 Ultra"),F("galaxy-s24","Galaxy S24"),
+      F("galaxy-z-fold-7","Galaxy Z Fold 7"),F("galaxy-z-flip-6","Galaxy Z Flip 6"),
+      F("pixel-9-pro","Pixel 9 Pro"),F("pixel-8-pro","Pixel 8 Pro"),
+      F("oneplus-13","OnePlus 13"),F("oneplus-12","OnePlus 12") ] },
     { id: "material", label: "Material", default: "patent", choices: [
       F("patent","Glossy"),F("matte","Matte"),F("leather","Leather"),F("silicone","Silicone") ] },
     { id: "lens", label: "Camera Ring", default: "silver", choices: [
@@ -429,13 +480,15 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
     { id: "metal", label: "Metal", default: "gold", choices: METAL_CHOICES },
     { id: "gem", label: "Gemstone", default: "diamond", choices: GEM_CHOICES },
     { id: "style", label: "Style", default: "drop", choices: [
-      F("stud","Stud"),F("hoop","Hoop"),F("huggie","Huggie"),F("drop","Drop"),
-      F("teardrop","Teardrop"),F("chandelier","Chandelier"),F("threader","Threader"),
-      F("ear-cuff","Ear Cuff"),F("jhumka","Jhumka"),F("cluster","Cluster"),
-      F("bar","Bar"),F("star","Star") ] },
+      F("stud","Stud"),F("hoop","Hoop"),F("pave-hoop","Pavé Hoop"),F("huggie","Huggie"),
+      F("drop","Drop"),F("dangle","Dangle"),F("teardrop","Teardrop"),F("chandelier","Chandelier"),
+      F("chandbali","Chandbali"),F("jhumka","Jhumka"),F("threader","Threader"),F("ear-cuff","Ear Cuff"),
+      F("ear-jacket","Ear Jacket"),F("climber","Climber"),F("tassel","Tassel"),F("cluster","Cluster"),
+      F("halo","Halo"),F("heart","Heart"),F("bar","Bar"),F("star","Star") ] },
     { id: "cut", label: "Stone Cut", default: "round", choices: CUT_CHOICES },
     { id: "size", label: "Size", default: "medium", choices: [
-      F("small","Small"),F("medium","Medium"),F("large","Large"),F("statement","Statement") ] },
+      F("tiny","Tiny"),F("small","Small"),F("medium","Medium"),F("large","Large"),
+      F("statement","Statement"),F("oversized","Oversized") ] },
   ],
 };
 
