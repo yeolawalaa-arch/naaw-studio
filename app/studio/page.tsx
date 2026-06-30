@@ -408,17 +408,43 @@ export default function StudioPage() {
       const res = await fetch("/api/ai-design", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: aiPrompt, product }),
+        body: JSON.stringify({ prompt: aiPrompt, product, products: PRODUCTS.map(p => ({ id: p.type, label: p.label })) }),
       });
       const data = await res.json();
-      if (data.colors) {
-        setColors({ ...DEFAULT_COLORS, ...data.colors });
-        if (data.patternSuggestion) setPattern(data.patternSuggestion);
+
+      // The AI can switch the product itself.
+      let target = product;
+      if (data.product && data.product !== product && PRODUCTS.some(p => p.type === data.product)) {
+        target = data.product as ProductType;
+        setProduct(target);
+        const cat = PRODUCTS.find(p => p.type === target)?.category;
+        if (cat) setActiveCategory(cat);
       }
-      if (data.options) {
-        setOptions(sanitizeOptions(product, data.options));
+
+      if (data.colors) setColors({ ...DEFAULT_COLORS, ...data.colors });
+      if (data.patternSuggestion) setPattern(data.patternSuggestion);
+      if (typeof data.patternIntensity === "number") setPatternIntensity(Math.max(0, Math.min(100, data.patternIntensity)));
+      if (typeof data.patternZone === "string") setPatternZone(data.patternZone);
+
+      // Options sanitised against the (possibly new) target product.
+      if (data.options) setOptions(sanitizeOptions(target, data.options));
+      else if (target !== product) setOptions(defaultOptions(target));
+
+      // Text / branding overlay.
+      if (data.text && typeof data.text.content === "string") {
+        setTextOverlay(prev => ({ ...prev, text: data.text.content, color: data.text.color || prev.color }));
       }
-      setAiResult(data.description || "Design applied!");
+
+      // Show worn on a model + pose.
+      if (data.show && (data.show.body === "male" || data.show.body === "female")) {
+        setBodyMode(data.show.body);
+        setView3D(true);
+        if (POSE_OPTS.some(p => p.id === data.show.pose)) setPose(data.show.pose as Pose);
+      } else if (data.show && data.show.body === "none") {
+        setBodyMode("none");
+      }
+
+      setAiResult(data.description || data.error || "Design applied!");
     } catch {
       setAiResult("Could not connect to AI. Try manually.");
     }

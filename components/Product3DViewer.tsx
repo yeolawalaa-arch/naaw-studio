@@ -346,6 +346,43 @@ function makeTexture(colors: ProductColors, pattern: string): THREE.CanvasTextur
       ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,size); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(size,i); ctx.stroke();
     }
+  } else if (pattern === "ajrakh") {
+    ctx.strokeStyle = ac; ctx.lineWidth = 1.5;
+    for (let y = 0; y < size; y += 40) for (let x = 0; x < size; x += 40) {
+      ctx.globalAlpha = 0.4; ctx.strokeRect(x+6, y+6, 28, 28);
+      ctx.fillStyle = ac; ctx.globalAlpha = 0.3; ctx.fillRect(x+15, y+15, 10, 10);
+      ctx.globalAlpha = 0.4;
+      ctx.beginPath(); ctx.moveTo(x+20,y); ctx.lineTo(x+26,y+6); ctx.lineTo(x+20,y+12); ctx.lineTo(x+14,y+6); ctx.closePath(); ctx.stroke();
+    }
+  } else if (pattern === "damask") {
+    ctx.strokeStyle = ac; ctx.lineWidth = 2;
+    for (let y = 0; y < size; y += 64) for (let x = 0; x < size; x += 64) {
+      const cx = x+32, cy = y+32;
+      ctx.globalAlpha = 0.34;
+      ctx.beginPath(); ctx.ellipse(cx, cy, 16, 26, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(cx, cy, 9, 16, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = ac; ctx.globalAlpha = 0.42; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI*2); ctx.fill();
+    }
+  } else if (pattern === "kalamkari") {
+    ctx.strokeStyle = ac; ctx.lineWidth = 2;
+    for (let y = 0; y < size; y += 44) {
+      ctx.globalAlpha = 0.38; ctx.beginPath();
+      for (let x = 0; x < size; x++) { const yy = y + Math.sin(x*Math.PI/40)*14; x === 0 ? ctx.moveTo(x,yy) : ctx.lineTo(x,yy); }
+      ctx.stroke();
+      ctx.fillStyle = ac; ctx.globalAlpha = 0.3;
+      for (let x = 0; x < size; x += 44) { ctx.beginPath(); ctx.arc(x+22, y, 4, 0, Math.PI*2); ctx.fill(); }
+    }
+  } else if (pattern === "madhubani") {
+    ctx.strokeStyle = ac; ctx.lineWidth = 1.4;
+    for (let y = 0; y < size; y += 48) for (let x = 0; x < size; x += 48) {
+      const cx = x+24, cy = y+24;
+      ctx.globalAlpha = 0.32;
+      ctx.beginPath(); ctx.arc(cx, cy, 16, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = ac; ctx.globalAlpha = 0.42; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 0.32;
+      for (let a = 0; a < 8; a++) { const ang = a*Math.PI/4; ctx.beginPath(); ctx.moveTo(cx+Math.cos(ang)*16, cy+Math.sin(ang)*16); ctx.lineTo(cx+Math.cos(ang)*22, cy+Math.sin(ang)*22); ctx.stroke(); }
+    }
   }
 
   ctx.globalAlpha = 1;

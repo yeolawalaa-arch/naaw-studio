@@ -20,7 +20,7 @@ function optionsSchemaText(product: string): string {
 
 export async function POST(req: NextRequest) {
  try {
-  const { prompt, product } = await req.json();
+  const { prompt, product, products } = await req.json();
 
   if (!process.env.GROQ_API_KEY) {
     return NextResponse.json({ error: "AI abhi configure nahi hai (API key missing)" }, { status: 503 });
@@ -51,6 +51,12 @@ OPTIONS RULES (very important):
 - If the user asks to "change X to Y" or "Y kar de" / "Y mein badal", treat Y as an explicit command and set the matching option id.
 - Only fall back to a vibe-based pick for options the user did not explicitly mention.` : "";
 
+  // Optional: let the AI switch the product itself if the user clearly asks for a different item.
+  const productList = Array.isArray(products) ? products.filter((p: { id?: string; label?: string }) => p && p.id && p.label) : [];
+  const productListText: string = productList.map((p: { id: string; label: string }) => `${p.id} (${p.label})`).join(", ");
+  const productBlock = productListText ? `,
+  "product": "optional — ONLY set if the user clearly wants a DIFFERENT item than ${product}; one of: [${productListText}]; otherwise omit this field"` : "";
+
   const completion = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [
@@ -73,7 +79,11 @@ Return a JSON object with these exact fields:
   },
   "style": "one word style (e.g. streetwear, retro, minimal, futuristic, luxury, traditional, ethnic)",
   "description": "2-3 sentence description of the design in Hinglish (mix of Hindi and English)",
-  "patternSuggestion": "one of: solid, gradient, bandhani, ikat, ajrakh, phulkari, kalamkari, madhubani, warli, leheriya, geometric, camo, sashiko, kente, arabesque, plaid, tiedye, dots"${optionsBlock}
+  "patternSuggestion": "one of: solid, gradient, bandhani, ikat, ajrakh, phulkari, kalamkari, madhubani, warli, leheriya, geometric, camo, sashiko, kente, arabesque, plaid, tiedye, dots, paisley, chevron, houndstooth, argyle, damask, nordic, greek-key, aztec, batik, mosaic",
+  "patternZone": "one of: full, upper, lower, center, left, right — where the pattern sits (default full)",
+  "patternIntensity": 70,
+  "text": { "content": "short text/slogan to print on the item, or empty string if none", "color": "#hexcolor" },
+  "show": { "body": "one of: none, male, female", "pose": "one of: stand, relaxed, walk, hips, tpose, handsup" }${productBlock}${optionsBlock}
 }
 
 Color guide:
@@ -81,7 +91,13 @@ Color guide:
 - secondary: a complementary or shadow tone
 - accent: the highlight, stripe, or pop color
 - detail: stitching, small elements
-- lining: inner lining or background${optionsGuide}
+- lining: inner lining or background
+
+STUDIO CONTROL (you drive the whole studio — set these when relevant, else use the safe default):
+- "product": set ONLY when the user clearly wants a different item than the current one ("make a hoodie", "saree dikhao", "isko jacket bana de"). Pick the closest id from the product list. Otherwise omit the field entirely.
+- "text": if the user wants words / a name / branding / a slogan printed on it ("write NAAW", "likho Rebel", "mera naam daal"), put that exact text in content with a high-contrast readable color. If they don't ask for text, use content "".
+- "show": if the user mentions wearing it / a model / a pose ("ladki pe dikha", "on a guy", "walking pose", "model pe"), set body to male or female and choose a fitting pose. Otherwise body "none" and pose "stand".
+- "patternZone" / "patternIntensity": set when the user mentions placement ("sirf upar/top", "neeche", "all over") or strength ("halka/subtle" = low, "bold/zyada/loud" = high). Otherwise full / 70.${optionsGuide}
 
 Only return valid JSON, nothing else. No markdown, no backticks.`,
       },
