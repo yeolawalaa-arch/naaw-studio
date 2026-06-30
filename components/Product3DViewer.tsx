@@ -2633,7 +2633,7 @@ export default function Product3DViewer({ productType, colors, pattern, options,
       camera={{ position: [0, 0, 7], fov: 42 }}
       shadows
       dpr={[1, 2]}
-      gl={{ antialias: true, toneMapping: THREE.NeutralToneMapping, toneMappingExposure: 1.05 }}
+      gl={{ antialias: true, preserveDrawingBuffer: true, toneMapping: THREE.NeutralToneMapping, toneMappingExposure: 1.05 }}
       style={{ background: "#0d0d0d" }}
     >
       {/* Neutral tone mapping + near-white lights keep the rendered colour true to

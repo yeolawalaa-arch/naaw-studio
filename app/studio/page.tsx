@@ -5,6 +5,36 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ProductType, ProductColors, TextOverlay } from "../../components/ProductCanvas";
 import { PRODUCT_OPTIONS, defaultOptions, sanitizeOptions, PRINTABLE } from "../../lib/productOptions";
+import { listDesigns, saveDesign, deleteDesign, type SavedDesign, type DesignState } from "../../lib/designs";
+
+// Rasterise the 2D product SVG to a PNG data URL at the requested width.
+function svgToPng(svg: SVGElement, width: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xml = new XMLSerializer().serializeToString(svg);
+    const src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
+    const img = new Image();
+    img.onload = () => {
+      const vb = (svg.getAttribute("viewBox") || "0 0 500 500").split(/\s+/).map(Number);
+      const aspect = (vb[3] || 500) / (vb[2] || 500);
+      const c = document.createElement("canvas");
+      c.width = width; c.height = Math.round(width * aspect);
+      const ctx = c.getContext("2d")!;
+      ctx.fillStyle = "#111"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL("image/png"));
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+// Downscale any canvas to a small PNG thumbnail.
+function canvasThumb(cv: HTMLCanvasElement, w: number): string {
+  const c = document.createElement("canvas");
+  const aspect = cv.height / cv.width || 1;
+  c.width = w; c.height = Math.round(w * aspect);
+  c.getContext("2d")!.drawImage(cv, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.7);
+}
 
 const ProductCanvas = dynamic(() => import("../../components/ProductCanvas"), { ssr: false });
 const Product3DViewer = dynamic(() => import("../../components/Product3DViewer"), { ssr: false });
@@ -237,6 +267,53 @@ function ProBadge({ onClick }: { onClick: () => void }) {
   );
 }
 
+function GalleryModal({ designs, currentId, onLoad, onDelete, onNew, onClose }: {
+  designs: SavedDesign[];
+  currentId: string | null;
+  onLoad: (d: SavedDesign) => void;
+  onDelete: (id: string) => void;
+  onNew: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-[#111] border border-white/15 rounded-2xl p-6 max-w-2xl w-full max-h-[82vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-white text-lg font-black">My Designs</p>
+            <p className="text-white/35 text-xs">Saved in this browser · click to open</p>
+          </div>
+          <button onClick={onNew} className="text-xs font-bold bg-white/10 text-white px-3 py-1.5 rounded-full hover:bg-white/15 transition">+ New</button>
+        </div>
+        {designs.length === 0 ? (
+          <p className="text-white/40 text-sm py-12 text-center">No saved designs yet. Hit <span className="text-emerald-400 font-bold">Save</span> to keep your work here.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {designs.map(d => (
+              <div key={d.id} className={`rounded-xl overflow-hidden border ${d.id === currentId ? "border-emerald-400" : "border-white/10"} bg-black/40`}>
+                <button onClick={() => onLoad(d)} className="block w-full" title="Open">
+                  <div className="aspect-square bg-[#0d0d0d] flex items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {d.thumb ? <img src={d.thumb} alt={d.name} className="w-full h-full object-contain" /> : <span className="text-white/20 text-3xl">✦</span>}
+                  </div>
+                </button>
+                <div className="p-2">
+                  <p className="text-white text-xs font-bold truncate" title={d.name}>{d.name}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <button onClick={() => onLoad(d)} className="text-[10px] text-emerald-400 font-bold hover:underline">Open</button>
+                    <button onClick={() => onDelete(d.id)} className="text-[10px] text-white/30 hover:text-red-400 transition">Delete</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <button onClick={onClose} className="w-full mt-5 text-white/40 text-xs hover:text-white transition">Close</button>
+      </div>
+    </div>
+  );
+}
+
 function UpgradeModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
@@ -292,6 +369,11 @@ export default function StudioPage() {
   const [printImage, setPrintImage] = useState<{ src: string; x: number; y: number; scale: number; opacity: number } | null>(null);
   const [bodyMode, setBodyMode] = useState<"none" | "male" | "female">("none");
   const [pose, setPose] = useState<Pose>("stand");
+  const [designs, setDesigns] = useState<SavedDesign[]>([]);
+  const [showGallery, setShowGallery] = useState(false);
+  const [currentDesignId, setCurrentDesignId] = useState<string | null>(null);
+  const [savedFlash, setSavedFlash] = useState(false);
+  useEffect(() => { setDesigns(listDesigns()); }, []);
 
   const productLabel = PRODUCTS.find(p => p.type === product)?.label ?? "";
   const productCategory = PRODUCTS.find(p => p.type === product)?.category ?? "";
@@ -350,9 +432,85 @@ export default function StudioPage() {
     const blob = new Blob([svg.outerHTML], { type: "image/svg+xml" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `design-${product}.svg`;
+    a.download = `naaw-${product}.svg`;
     a.click();
   };
+
+  const handleExportPng = async () => {
+    if (!isPro) { setShowUpgrade(true); return; }
+    let url: string | undefined;
+    if (view3D) {
+      const cv = document.querySelector("#preview-stage canvas") as HTMLCanvasElement | null;
+      if (cv) url = cv.toDataURL("image/png");
+    } else {
+      const svg = document.querySelector("#product-canvas svg") as SVGElement | null;
+      if (svg) url = await svgToPng(svg, 1600);
+    }
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `naaw-${product}.png`;
+    a.click();
+  };
+
+  // ── Save / load designs ──
+  const gatherState = (): DesignState => ({
+    product, activeCategory, gender, colors, pattern, patternStyle, patternZone,
+    patternIntensity, options, textOverlay, printImage, bodyMode, pose, view3D,
+  });
+
+  const captureThumb = async (): Promise<string | undefined> => {
+    try {
+      if (view3D) {
+        const cv = document.querySelector("#preview-stage canvas") as HTMLCanvasElement | null;
+        if (cv) return canvasThumb(cv, 260);
+      } else {
+        const svg = document.querySelector("#product-canvas svg") as SVGElement | null;
+        if (svg) return await svgToPng(svg, 260);
+      }
+    } catch { /* ignore */ }
+    return undefined;
+  };
+
+  const handleSaveDesign = async () => {
+    if (!isPro) { setShowUpgrade(true); return; }
+    const thumb = await captureThumb();
+    const existing = currentDesignId ? designs.find(d => d.id === currentDesignId) : undefined;
+    const name = existing?.name || `${productLabel} · ${new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}`;
+    const saved = saveDesign({ id: currentDesignId || undefined, name, state: gatherState(), thumb });
+    setCurrentDesignId(saved.id);
+    setDesigns(listDesigns());
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 1600);
+  };
+
+  const handleLoadDesign = (d: SavedDesign) => {
+    const s = d.state;
+    setProduct(s.product as ProductType);
+    setActiveCategory(s.activeCategory);
+    setGender(s.gender);
+    setColors(s.colors);
+    setPattern(s.pattern);
+    setPatternStyle(s.patternStyle);
+    setPatternZone(s.patternZone);
+    setPatternIntensity(s.patternIntensity);
+    setOptions(s.options);
+    setTextOverlay(s.textOverlay);
+    setPrintImage(s.printImage);
+    setBodyMode(s.bodyMode);
+    setPose(s.pose as Pose);
+    setView3D(s.view3D);
+    setCurrentDesignId(d.id);
+    setShowGallery(false);
+  };
+
+  const handleDeleteDesign = (id: string) => {
+    deleteDesign(id);
+    setDesigns(listDesigns());
+    if (currentDesignId === id) setCurrentDesignId(null);
+  };
+
+  const handleNewDesign = () => { setCurrentDesignId(null); setShowGallery(false); };
 
   const handleProductSelect = (type: ProductType) => {
     if (!isPro && !FREE_PRODUCTS.includes(type)) { setShowUpgrade(true); return; }
@@ -376,6 +534,16 @@ export default function StudioPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans">
       {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
+      {showGallery && (
+        <GalleryModal
+          designs={designs}
+          currentId={currentDesignId}
+          onLoad={handleLoadDesign}
+          onDelete={handleDeleteDesign}
+          onNew={handleNewDesign}
+          onClose={() => setShowGallery(false)}
+        />
+      )}
 
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-white/10">
@@ -687,13 +855,28 @@ export default function StudioPage() {
             </Section>
           )}
 
-          {/* 10 — Export */}
-          <Section n={10} title="Export"
-            role="Download your finished design as a file to share or print.">
-            <button onClick={handleExport}
-              className={`w-full py-3 rounded-xl text-sm font-bold transition ${isPro ? "bg-white text-black hover:bg-white/90" : "bg-white/10 text-white/40 hover:bg-white/15"}`}>
-              {isPro ? "Export SVG" : "🔒 Export — Pro Only"}
-            </button>
+          {/* 10 — Save & Export */}
+          <Section n={10} title="Save & Export"
+            role="Save your design to return to it later, or download it to share or print.">
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={handleSaveDesign}
+                className="py-3 rounded-xl text-sm font-bold bg-emerald-400 text-black hover:bg-emerald-300 transition">
+                {savedFlash ? "✓ Saved" : currentDesignId ? "↻ Update" : "💾 Save"}
+              </button>
+              <button onClick={() => { setDesigns(listDesigns()); setShowGallery(true); }}
+                className="py-3 rounded-xl text-sm font-bold bg-white/10 text-white hover:bg-white/15 transition">
+                📁 My Designs{designs.length ? ` · ${designs.length}` : ""}
+              </button>
+              <button onClick={handleExportPng}
+                className={`py-3 rounded-xl text-sm font-bold transition ${isPro ? "bg-white text-black hover:bg-white/90" : "bg-white/10 text-white/40 hover:bg-white/15"}`}>
+                {isPro ? "⬇ PNG" : "🔒 PNG"}
+              </button>
+              <button onClick={handleExport}
+                className={`py-3 rounded-xl text-sm font-bold transition ${isPro ? "bg-white/85 text-black hover:bg-white" : "bg-white/10 text-white/40 hover:bg-white/15"}`}>
+                {isPro ? "⬇ SVG" : "🔒 SVG"}
+              </button>
+            </div>
+            <p className="text-[10px] text-white/30 mt-2 text-center">PNG works for 2D & 3D · SVG for 2D flat</p>
           </Section>
         </div>
 
@@ -750,7 +933,7 @@ export default function StudioPage() {
 
           <div className="flex-1 flex items-center justify-center p-6">
             {view3D ? (
-              <div className="w-full max-w-3xl" style={{ height: "min(640px, 72vh)" }}>
+              <div id="preview-stage" className="w-full max-w-3xl" style={{ height: "min(640px, 72vh)" }}>
                 <Product3DViewer productType={product} colors={colors} pattern={pattern} options={options}
                   showBody={canWear && bodyMode !== "none"} bodyGender={bodyMode === "female" ? "female" : "male"} pose={pose}/>
                 <p className="text-center text-white/25 text-[10px] mt-2">
