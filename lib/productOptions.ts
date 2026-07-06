@@ -108,6 +108,11 @@ export const FABRICS: Record<string, FabricSpec> = {
   sequin:    { roughness: 0.30, clearcoat: 0.5,  sheen: 0.7,  metalness: 0.5 },
   crochet:   { roughness: 0.85, clearcoat: 0.0,  sheen: 0.1 },
   lace:      { roughness: 0.60, clearcoat: 0.2,  sheen: 0.3 },
+  croc:      { roughness: 0.42, clearcoat: 0.55, sheen: 0.25 },
+  saffiano:  { roughness: 0.55, clearcoat: 0.32, sheen: 0.12 },
+  carbon:    { roughness: 0.34, clearcoat: 0.7,  sheen: 0.0, metalness: 0.28 },
+  pebbled:   { roughness: 0.62, clearcoat: 0.28, sheen: 0.1 },
+  nubuck:    { roughness: 0.9,  clearcoat: 0.0,  sheen: 0.18 },
 };
 
 export interface GemSpec { color: string; transmission: number; roughness: number; metalness: number }
@@ -184,6 +189,26 @@ const LENS_COLOR_CHOICES: OptionChoice[] = [
   C("orange", "Orange", LENS_COLORS.orange), C("yellow", "Yellow", LENS_COLORS.yellow),
   C("teal", "Teal", LENS_COLORS.teal), C("ice", "Ice", LENS_COLORS.ice),
 ];
+
+// ── Shared per-part colour palette. Lets every detail of a product get its own
+//    colour option (body, lining, trim, laces, straps…). PART_COLORS is the id→hex
+//    map the 3D viewer reads; COLOR_OPT builds a colour picker for a named part. ──
+const COLOR_SWATCHES: [string, string, string][] = [
+  ["black","Black","#1B1B1D"],["charcoal","Charcoal","#33353A"],["slate","Slate","#5A6270"],
+  ["grey","Grey","#8A8D92"],["silver","Silver","#C8CCD2"],["white","White","#ECECEC"],
+  ["cream","Cream","#E9E0C8"],["sand","Sand","#D8C4A0"],["tan","Tan","#B98A5E"],
+  ["camel","Camel","#C08A4E"],["brown","Brown","#6B4A2E"],["chocolate","Chocolate","#3E2A1C"],
+  ["oxblood","Oxblood","#5A2A2A"],["red","Red","#9A2A2A"],["crimson","Crimson","#B01E3C"],
+  ["rust","Rust","#A2502A"],["orange","Orange","#C4622A"],["mustard","Mustard","#C79A32"],
+  ["yellow","Yellow","#E0B93A"],["lime","Lime","#8DB02E"],["olive","Olive","#5A5A2E"],
+  ["green","Green","#2E6E4E"],["forest","Forest","#1F4A32"],["teal","Teal","#1F6B6B"],
+  ["navy","Navy","#22386A"],["blue","Blue","#2A4A9A"],["royal","Royal","#2350C8"],
+  ["sky","Sky","#5A86C4"],["purple","Purple","#5A3A7A"],["plum","Plum","#4A2A44"],
+  ["pink","Pink","#C86A86"],["magenta","Magenta","#A02A6A"],["burgundy","Burgundy","#5C1F2E"],
+];
+export const PART_COLORS: Record<string, string> = Object.fromEntries(COLOR_SWATCHES.map(([i, , h]) => [i, h]));
+const COLOR_CHOICES: OptionChoice[] = COLOR_SWATCHES.map(([i, l, h]) => C(i, l, h));
+const COLOR_OPT = (id: string, label: string, def: string): ProductOption => ({ id, label, default: def, choices: COLOR_CHOICES });
 
 // Reusable broad choice lists (all wired through METALS / GEMS / gemCutGeometry)
 const METAL_CHOICES: OptionChoice[] = [
@@ -339,8 +364,13 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
 
   // ── FOOTWEAR ──
   "sneaker-low": [
-    { id: "material", label: "Upper", default: "leather", choices: [
-      F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("mesh","Mesh"),F("patent","Patent"),F("nylon","Nylon"),F("knit","Knit"),F("corduroy","Corduroy") ] },
+    { id: "material", label: "Upper Material", default: "leather", choices: [
+      F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("mesh","Mesh"),F("patent","Patent"),F("nylon","Nylon"),F("knit","Knit"),F("corduroy","Corduroy"),F("nubuck","Nubuck") ] },
+    COLOR_OPT("upperColor","Upper Colour","white"),
+    COLOR_OPT("overlayColor","Overlays","black"),
+    COLOR_OPT("accentColor","Swoosh / Accent","red"),
+    COLOR_OPT("liningColor","Lining / Collar","grey"),
+    { id: "eyelets", label: "Eyelets", default: "silver", choices: METAL_CHOICES },
     { id: "toe", label: "Toe Box", default: "cap", choices: [
       F("cap","Rubber Cap"),F("perf","Perforated"),F("plain","Plain") ] },
     { id: "sole", label: "Sole Color", default: "white", choices: [
@@ -351,8 +381,13 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
       C("red","Red","#7A2222"),C("blue","Blue","#1C3A66"),C("gum","Gum","#C9A26A"),C("none","No Laces","#777") ] },
   ],
   "sneaker-high": [
-    { id: "material", label: "Upper", default: "leather", choices: [
-      F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("patent","Patent"),F("nylon","Nylon"),F("corduroy","Corduroy") ] },
+    { id: "material", label: "Upper Material", default: "leather", choices: [
+      F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("patent","Patent"),F("nylon","Nylon"),F("corduroy","Corduroy"),F("nubuck","Nubuck") ] },
+    COLOR_OPT("upperColor","Upper Colour","white"),
+    COLOR_OPT("overlayColor","Overlays","black"),
+    COLOR_OPT("accentColor","Swoosh / Accent","red"),
+    COLOR_OPT("liningColor","Lining / Collar","grey"),
+    { id: "eyelets", label: "Eyelets", default: "silver", choices: METAL_CHOICES },
     { id: "toe", label: "Toe Box", default: "cap", choices: [
       F("cap","Rubber Cap"),F("perf","Perforated"),F("plain","Plain") ] },
     { id: "sole", label: "Sole Color", default: "white", choices: [
@@ -394,12 +429,22 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
 
   // ── BAGS ──
   backpack: [
-    { id: "material", label: "Material", default: "nylon", choices: [F("nylon","Nylon"),F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("ripstop","Ripstop"),F("denim","Denim"),F("mesh","Mesh"),F("knit","Knit")] },
+    { id: "material", label: "Material", default: "nylon", choices: [F("nylon","Nylon"),F("leather","Leather"),F("canvas","Canvas"),F("suede","Suede"),F("ripstop","Ripstop"),F("denim","Denim"),F("mesh","Mesh"),F("knit","Knit"),F("nubuck","Nubuck")] },
+    COLOR_OPT("bodyColor","Body Colour","charcoal"),
+    COLOR_OPT("pocketColor","Front Pocket","black"),
+    COLOR_OPT("strapColor","Straps","black"),
+    COLOR_OPT("trimColor","Trim / Piping","grey"),
+    COLOR_OPT("liningColor","Lining","red"),
     { id: "hardware", label: "Hardware", default: "silver", choices: [M("silver","Silver"),M("gold","Gold"),M("gunmetal","Gunmetal"),M("black","Black"),M("bronze","Bronze"),M("brass","Brass"),M("chrome","Chrome"),M("titanium","Titanium")] },
+    { id: "flap", label: "Flap", default: "open", choices: [F("open","Open Top"),F("closed","Buckled Flap")] },
   ],
   tote: [
-    { id: "material", label: "Material", default: "canvas", choices: [F("canvas","Canvas"),F("leather","Leather"),F("denim","Denim"),F("nylon","Nylon"),F("corduroy","Corduroy"),F("suede","Suede"),F("twill","Twill")] },
+    { id: "material", label: "Material", default: "canvas", choices: [F("canvas","Canvas"),F("leather","Leather"),F("denim","Denim"),F("nylon","Nylon"),F("corduroy","Corduroy"),F("suede","Suede"),F("twill","Twill"),F("croc","Croc"),F("saffiano","Saffiano")] },
+    COLOR_OPT("bodyColor","Body Colour","cream"),
+    COLOR_OPT("trimColor","Trim / Base","tan"),
+    COLOR_OPT("liningColor","Lining","navy"),
     { id: "handle", label: "Handle", default: "gold", choices: [M("gold","Gold"),M("silver","Silver"),M("black","Black"),M("gunmetal","Gunmetal"),M("bronze","Bronze"),M("brass","Brass"),C("tonal","Tonal","#8a6d3b")] },
+    { id: "open", label: "Opening", default: "open", choices: [F("open","Open"),F("snap","Snap Closed")] },
   ],
 
   // ── ACCESSORIES ──
@@ -443,10 +488,17 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
       F("star","Star"),F("coin","Coin"),F("none","None") ] },
   ],
   wallet: [
-    FABRIC_OPT("leather", [["leather","Leather"],["suede","Suede"],["patent","Patent"],["nylon","Nylon"],["canvas","Canvas"],["denim","Denim"]]),
-    { id: "stitch", label: "Stitch", default: "accent", choices: [
-      C("accent","Accent"),C("white","White","#EDEDED"),C("tonal","Tonal","#3A3A3A"),
-      C("gold","Gold","#D4A853"),C("red","Red","#9A3A3A"),C("blue","Blue","#2A4A7A"),C("cream","Cream","#E9E0C8") ] },
+    { id: "style", label: "Style", default: "bifold", choices: [
+      F("bifold","Bifold"),F("trifold","Trifold"),F("cardholder","Card Holder"),
+      F("long","Long Wallet"),F("zip","Zip-Around"),F("money-clip","Money Clip") ] },
+    FABRIC_OPT("leather", [["leather","Leather"],["suede","Suede"],["croc","Croc"],["saffiano","Saffiano"],["pebbled","Pebbled"],["nubuck","Nubuck"],["patent","Patent"],["carbon","Carbon Fibre"],["nylon","Nylon"],["canvas","Canvas"],["denim","Denim"]]),
+    COLOR_OPT("bodyColor","Body Colour","brown"),
+    COLOR_OPT("liningColor","Lining","tan"),
+    COLOR_OPT("stitch","Stitch","cream"),
+    { id: "hardware", label: "Hardware", default: "gold", choices: METAL_CHOICES },
+    COLOR_OPT("edge","Edge Paint","chocolate"),
+    { id: "monogram", label: "Monogram", default: "none", choices: [
+      F("none","None"),F("corner","Corner Tag"),F("center","Center Emboss") ] },
   ],
   scarf: [
     FABRIC_OPT("wool", [["wool","Wool"],["silk","Silk"],["cashmere","Cashmere"],["chiffon","Chiffon"],["modal","Modal"],["linen","Linen"],["velvet","Velvet"],["jacquard","Jacquard"],["khadi","Khadi"]]),

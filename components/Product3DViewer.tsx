@@ -5,7 +5,10 @@ import { OrbitControls, Environment, ContactShadows, RoundedBox, Cylinder, Torus
 import * as THREE from "three";
 import { useRef } from "react";
 import { ProductColors } from "./ProductCanvas";
-import { METALS, SHELLS, FABRICS, GEMS, LENS_TYPES, LENS_COLORS, FabricSpec } from "../lib/productOptions";
+import { METALS, SHELLS, FABRICS, GEMS, LENS_TYPES, LENS_COLORS, FabricSpec, PART_COLORS } from "../lib/productOptions";
+
+// Resolve a per-part colour option id → hex (falls back to a given colour).
+const partColor = (id: string | undefined, fallback: string): string => (id && PART_COLORS[id]) || fallback;
 
 type Opts = Record<string, string> | undefined;
 
@@ -592,13 +595,13 @@ function SneakerLow3D({ colors, pattern, options }: { colors: ProductColors; pat
   const laceCol = laceId === "accent" ? colors.accent : (LACE_COLORS[laceId] || "#FFFFFF");
   const showLaces = laceId !== "none";
   const toe = o.toe || "cap";
-  // Material — white upper, finish varies (leather/canvas/suede/mesh/patent)
+  // Per-part colours: upper, overlays, accent (swoosh), lining/collar, metal eyelets.
   const upperMat = useMemo(() => new THREE.MeshPhysicalMaterial({
-    color: 0xF6F6F6, roughness: fin.roughness, metalness: 0, clearcoat: fin.clearcoat, clearcoatRoughness: 0.08,
-  }), [fin]);
+    color: new THREE.Color(partColor(o.upperColor, "#F6F6F6")), roughness: fin.roughness, metalness: 0, clearcoat: fin.clearcoat, clearcoatRoughness: 0.08,
+  }), [fin, o.upperColor]);
   const panelMat = useMemo(() => new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color(colors.main), roughness: fin.roughness, clearcoat: fin.clearcoat * 0.8, clearcoatRoughness: 0.12,
-  }), [colors.main, fin]);
+    color: new THREE.Color(partColor(o.overlayColor, colors.main)), roughness: fin.roughness, clearcoat: fin.clearcoat * 0.8, clearcoatRoughness: 0.12,
+  }), [o.overlayColor, colors.main, fin]);
   const perfMat = useMemo(() => new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.9 }), []);
   const soleMat = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(soleCol), roughness: 0.82, metalness: 0, clearcoat: 0.25,
@@ -607,12 +610,13 @@ function SneakerLow3D({ colors, pattern, options }: { colors: ProductColors; pat
     color: new THREE.Color(soleCol).multiplyScalar(0.78), roughness: 0.95,
   }), [soleCol]);
   const accentMat = useMemo(() => new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color(colors.accent), roughness: 0.35, metalness: 0.05, clearcoat: 0.5,
-  }), [colors.accent]);
+    color: new THREE.Color(partColor(o.accentColor, colors.accent)), roughness: 0.35, metalness: 0.05, clearcoat: 0.5,
+  }), [o.accentColor, colors.accent]);
+  const eyeletMat = useMemo(() => metalMaterial(o.eyelets, colors.accent), [o.eyelets, colors.accent]);
   const laceMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(laceCol), roughness: 0.92 }), [laceCol]);
   const tongueMat = useMemo(() => new THREE.MeshPhysicalMaterial({
-    color: 0xF0F0F0, roughness: 0.35, clearcoat: 0.4,
-  }), []);
+    color: new THREE.Color(partColor(o.liningColor, "#F0F0F0")), roughness: 0.35, clearcoat: 0.4,
+  }), [o.liningColor]);
 
   // Proven low-top upper profile (seated onto the chunky midsole via the lifted group)
   const shoeShape = useMemo(() => {
@@ -659,7 +663,7 @@ function SneakerLow3D({ colors, pattern, options }: { colors: ProductColors; pat
         ))}
         {/* Eyelet rings */}
         {showLaces && [-0.95,-0.5,-0.05,0.4,0.82].map((x,i) => (
-          <mesh key={`e-${i}`} position={[x, 1.52+i*0.035, 1.5]} rotation={[Math.PI/2,0,0]} material={accentMat}>
+          <mesh key={`e-${i}`} position={[x, 1.52+i*0.035, 1.5]} rotation={[Math.PI/2,0,0]} material={eyeletMat}>
             <torusGeometry args={[0.09, 0.024, 6, 12]}/>
           </mesh>
         ))}
@@ -683,16 +687,20 @@ function SneakerHigh3D({ colors, pattern, options }: { colors: ProductColors; pa
   const showLaces = laceId !== "none";
   const toe = o.toe || "cap";
   const upperMat = useMemo(() => new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color(colors.main), roughness: fin.roughness, metalness: 0, clearcoat: fin.clearcoat, clearcoatRoughness: 0.1,
-  }), [colors.main, fin]);
+    color: new THREE.Color(partColor(o.upperColor, "#F6F6F6")), roughness: fin.roughness, metalness: 0, clearcoat: fin.clearcoat, clearcoatRoughness: 0.1,
+  }), [o.upperColor, fin]);
+  const panelMat = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(partColor(o.overlayColor, colors.main)), roughness: fin.roughness, clearcoat: fin.clearcoat * 0.8, clearcoatRoughness: 0.12,
+  }), [o.overlayColor, colors.main, fin]);
   const perfMat = useMemo(() => new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.9 }), []);
   const soleMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(soleCol), roughness: 0.82, clearcoat: 0.25 }), [soleCol]);
   const outsoleRubber = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(soleCol).multiplyScalar(0.76), roughness: 0.95 }), [soleCol]);
   const accentMat = useMemo(() => new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color(colors.accent), roughness: 0.3, clearcoat: 0.6,
-  }), [colors.accent]);
+    color: new THREE.Color(partColor(o.accentColor, colors.accent)), roughness: 0.3, clearcoat: 0.6,
+  }), [o.accentColor, colors.accent]);
+  const eyeletMat = useMemo(() => metalMaterial(o.eyelets, colors.accent), [o.eyelets, colors.accent]);
   const laceMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(laceCol), roughness: 0.92 }), [laceCol]);
-  const tongueMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.main).multiplyScalar(1.05), roughness: 0.4 }), [colors.main]);
+  const tongueMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(partColor(o.liningColor, "#F0F0F0")), roughness: 0.4 }), [o.liningColor]);
 
   const highShoeShape = useMemo(() => {
     const s = new THREE.Shape();
@@ -730,11 +738,19 @@ function SneakerHigh3D({ colors, pattern, options }: { colors: ProductColors; pa
         )))}
         {/* Padded tongue rising into the collar */}
         <RoundedBox args={[1.05, 1.3, 0.12]} radius={0.06} position={[-0.4, 1.5, 0.96]} rotation={[-0.14,0,0]} material={tongueMat}/>
+        {/* Coloured eyestay / mudguard overlay */}
+        <RoundedBox args={[2.2, 0.85, 0.06]} radius={0.05} position={[0.35, 1.15, 1.46]} material={panelMat}/>
         {/* Accent stripe */}
         <RoundedBox args={[2.8, 0.2, 0.06]} radius={0.04} position={[0.05, 0.82, 1.5]} material={accentMat}/>
         {/* Laces — extra rows up the higher collar */}
         {showLaces && [-0.95,-0.5,-0.05,0.4,0.82,1.2,1.55].map((x,i) => (
           <RoundedBox key={`l-${i}`} args={[0.13, 0.06, 1.32]} radius={0.03} position={[x, 1.52+i*0.03, 0.9]} rotation={[-0.12,0,0]} material={laceMat}/>
+        ))}
+        {/* Metal eyelet rings */}
+        {showLaces && [-0.95,-0.5,-0.05,0.4,0.82,1.2].map((x,i) => (
+          <mesh key={`e-${i}`} position={[x, 1.54+i*0.03, 1.5]} rotation={[Math.PI/2,0,0]} material={eyeletMat}>
+            <torusGeometry args={[0.085, 0.022, 6, 12]}/>
+          </mesh>
         ))}
         {/* Heel tab + collar trim + pull loop */}
         <RoundedBox args={[0.24, 0.7, 0.14]} radius={0.06} position={[2.78, 0.96, 0.1]} material={accentMat}/>
@@ -1268,35 +1284,44 @@ function SlipOn3D({ colors, pattern, options }: { colors: ProductColors; pattern
 // BACKPACK
 // ─────────────────────────────────────────────
 function Backpack3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.82, 0, 0.2, finishOf(options));
-  const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.88 }), [colors.secondary]);
-  const metal = useMemo(() => metalMaterial(options?.hardware, colors.accent), [options?.hardware, colors.accent]);
+  const o = options || {};
+  const body = useMat({ ...colors, main: partColor(o.bodyColor, colors.main) }, pattern, 0.82, 0, 0.2, finishOf(o));
+  const pocket = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.pocketColor, colors.secondary)), roughness: 0.86 }), [o.pocketColor, colors.secondary]);
+  const strap = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.strapColor, colors.secondary)), roughness: 0.84 }), [o.strapColor, colors.secondary]);
+  const trim = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.trimColor, colors.detail)), roughness: 0.7 }), [o.trimColor, colors.detail]);
+  const lining = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.liningColor, colors.lining)), roughness: 0.7 }), [o.liningColor, colors.lining]);
+  const metal = useMemo(() => metalMaterial(o.hardware, colors.accent), [o.hardware, colors.accent]);
+  const closed = o.flap === "closed";
   return (
     <group>
+      {/* Open-top lining rim (visible when not flapped) */}
+      {!closed && <RoundedBox args={[2.02, 0.5, 0.86]} radius={0.1} position={[0,1.5,0.02]} material={lining}/>}
       {/* Main body */}
-      <RoundedBox args={[2.35, 3.0, 1.0]} radius={0.18} position={[0,0.1,0]} material={mat}/>
+      <RoundedBox args={[2.35, 3.0, 1.0]} radius={0.18} position={[0,0.1,0]} material={body}/>
       {/* Front pocket */}
-      <RoundedBox args={[1.72, 1.1, 0.14]} radius={0.1} position={[0,-0.62,0.57]} material={dark}/>
-      {/* Zipper pull on pocket */}
-      <mesh material={metal} position={[0.86,-0.62,0.6]} rotation={[0,0,Math.PI/2]}>
-        <cylinderGeometry args={[0.05,0.05,0.16,8]}/>
-      </mesh>
-      {/* Main compartment zip */}
-      <RoundedBox args={[2.35,0.1,0.08]} radius={0.04} position={[0,1.62,0.04]} material={dark}/>
-      <mesh material={metal} position={[1.18,1.62,0.1]} rotation={[0,0,Math.PI/2]}>
-        <cylinderGeometry args={[0.06,0.06,0.18,8]}/>
-      </mesh>
+      <RoundedBox args={[1.72, 1.1, 0.16]} radius={0.1} position={[0,-0.62,0.57]} material={pocket}/>
+      {/* Pocket zip + pull */}
+      <RoundedBox args={[1.6,0.07,0.06]} radius={0.03} position={[0,-0.08,0.62]} material={trim}/>
+      <mesh material={metal} position={[0.8,-0.08,0.66]} rotation={[0,0,Math.PI/2]}><cylinderGeometry args={[0.05,0.05,0.16,8]}/></mesh>
+      {/* Top: buckled flap or zip */}
+      {closed ? (<>
+        <RoundedBox args={[2.42, 1.3, 0.16]} radius={0.14} position={[0,1.16,0.5]} rotation={[0.32,0,0]} material={body}/>
+        <RoundedBox args={[0.4,0.6,0.1]} radius={0.05} position={[0,0.6,0.74]} material={strap}/>
+        <RoundedBox args={[0.36,0.22,0.14]} radius={0.05} position={[0,0.34,0.78]} material={metal}/>
+      </>) : (<>
+        <RoundedBox args={[2.35,0.1,0.08]} radius={0.04} position={[0,1.62,0.04]} material={trim}/>
+        <mesh material={metal} position={[1.18,1.62,0.1]} rotation={[0,0,Math.PI/2]}><cylinderGeometry args={[0.06,0.06,0.18,8]}/></mesh>
+      </>)}
       {/* Shoulder straps (back of pack) */}
-      <RoundedBox args={[0.22, 2.6, 0.14]} radius={0.08} position={[-0.7,0,-0.42]} material={dark}/>
-      <RoundedBox args={[0.22, 2.6, 0.14]} radius={0.08} position={[0.7,0,-0.42]} material={dark}/>
-      {/* Front straps — drape over the shoulders onto the chest so the pack reads as "worn" from the front.
-          After the wear-rotation (Y 180°, scale 0.5, pos z -0.72) local z -2.3 lands at world z +0.43, on the chest. */}
-      <RoundedBox args={[0.44, 2.3, 0.4]} radius={0.1} position={[-1.0,0.85,-2.3]} material={dark}/>
-      <RoundedBox args={[0.44, 2.3, 0.4]} radius={0.1} position={[1.0,0.85,-2.3]} material={dark}/>
+      <RoundedBox args={[0.22, 2.6, 0.14]} radius={0.08} position={[-0.7,0,-0.42]} material={strap}/>
+      <RoundedBox args={[0.22, 2.6, 0.14]} radius={0.08} position={[0.7,0,-0.42]} material={strap}/>
+      {/* Front straps — drape over the shoulders onto the chest so the pack reads as "worn" from the front. */}
+      <RoundedBox args={[0.44, 2.3, 0.4]} radius={0.1} position={[-1.0,0.85,-2.3]} material={strap}/>
+      <RoundedBox args={[0.44, 2.3, 0.4]} radius={0.1} position={[1.0,0.85,-2.3]} material={strap}/>
       {/* Sternum clip tying the two front straps together */}
       <RoundedBox args={[2.0, 0.2, 0.34]} radius={0.08} position={[0,0.2,-2.28]} material={metal}/>
       {/* Handle */}
-      <RoundedBox args={[0.58, 0.18, 0.16]} radius={0.07} position={[0,1.72,-0.18]} material={dark}/>
+      <RoundedBox args={[0.58, 0.18, 0.16]} radius={0.07} position={[0,1.72,-0.18]} material={trim}/>
     </group>
   );
 }
@@ -1305,22 +1330,31 @@ function Backpack3D({ colors, pattern, options }: { colors: ProductColors; patte
 // TOTE
 // ─────────────────────────────────────────────
 function Tote3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.8, 0, 0.2, finishOf(options));
-  const handle = useMemo(() => options?.handle === "tonal"
+  const o = options || {};
+  const body = useMat({ ...colors, main: partColor(o.bodyColor, colors.main) }, pattern, 0.8, 0, 0.2, finishOf(o));
+  const trim = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.trimColor, colors.detail)), roughness: 0.72 }), [o.trimColor, colors.detail]);
+  const lining = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.liningColor, colors.lining)), roughness: 0.72 }), [o.liningColor, colors.lining]);
+  const handle = useMemo(() => o.handle === "tonal"
     ? new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.detail), roughness: 0.5, clearcoat: 0.3 })
-    : metalMaterial(options?.handle, colors.accent), [options?.handle, colors.accent, colors.detail]);
+    : metalMaterial(o.handle, colors.accent), [o.handle, colors.accent, colors.detail]);
+  const snap = o.open === "snap";
   return (
     <group>
+      {/* Interior lining (peeks through the open top) */}
+      <RoundedBox args={[2.52, 2.7, 0.5]} radius={0.1} position={[0,-0.05,0]} material={lining}/>
       {/* Body */}
-      <RoundedBox args={[2.75, 3.0, 0.65]} radius={0.12} position={[0,-0.15,0]} material={mat}/>
-      {/* Inner top fold */}
-      <RoundedBox args={[2.75, 0.22, 0.68]} radius={0.08} position={[0,1.52,0]} material={handle}/>
+      <RoundedBox args={[2.75, 3.0, 0.65]} radius={0.12} position={[0,-0.15,0]} material={body}/>
+      {/* Base panel */}
+      <RoundedBox args={[2.78, 0.5, 0.68]} radius={0.1} position={[0,-1.4,0]} material={trim}/>
+      {/* Top fold / binding */}
+      <RoundedBox args={[2.78, 0.22, 0.7]} radius={0.08} position={[0,1.52,0]} material={trim}/>
+      {snap && <mesh material={handle} position={[0,1.48,0.37]}><sphereGeometry args={[0.11,16,16]}/></mesh>}
       {/* Handles */}
       <Torus args={[0.72, 0.07, 12, 34, Math.PI]} position={[-0.72,1.68,0]} rotation={[0,0,0.14]} material={handle}/>
       <Torus args={[0.72, 0.07, 12, 34, Math.PI]} position={[0.72,1.68,0]} rotation={[0,0,-0.14]} material={handle}/>
       {/* Stitching lines */}
-      <RoundedBox args={[2.6,0.04,0.67]} radius={0.02} position={[0,0.0,0.01]} material={handle}/>
-      <RoundedBox args={[2.6,0.04,0.67]} radius={0.02} position={[0,-0.85,0.01]} material={handle}/>
+      <RoundedBox args={[2.6,0.04,0.67]} radius={0.02} position={[0,0.0,0.01]} material={trim}/>
+      <RoundedBox args={[2.6,0.04,0.67]} radius={0.02} position={[0,-0.85,0.01]} material={trim}/>
     </group>
   );
 }
@@ -1566,24 +1600,75 @@ function Chain3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 // ─────────────────────────────────────────────
 // WALLET
 // ─────────────────────────────────────────────
+// Open, detailed wallet — every part is a separate colour option (body, lining,
+// stitch, edge paint, hardware) and the style drives the geometry.
 function Wallet3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.6, 0, 0.5, finishOf(options));
-  const inner = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.lining), roughness: 0.7 }), [colors.lining]);
-  const stitchCol = (!options?.stitch || options.stitch === "accent") ? colors.accent : (STITCH_COLORS[options.stitch] || colors.accent);
-  const stitchMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(stitchCol), roughness: 0.8 }), [stitchCol]);
+  const o = options || {};
+  const style = o.style || "bifold";
+  const bodyMat = useMat({ ...colors, main: partColor(o.bodyColor, colors.main) }, pattern, 0.6, 0, 0.5, finishOf(o));
+  const lining = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.liningColor, colors.lining)), roughness: 0.72 }), [o.liningColor, colors.lining]);
+  const slotMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.bodyColor, colors.main)), roughness: 0.6 }), [o.bodyColor, colors.main]);
+  const stitch = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.stitch, colors.accent)), roughness: 0.82 }), [o.stitch, colors.accent]);
+  const edge = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(o.edge, "#2A2A2A")), roughness: 0.78 }), [o.edge]);
+  const hardware = useMemo(() => metalMaterial(o.hardware, colors.accent), [o.hardware, colors.accent]);
+  const idWin = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color("#cdd6de"), roughness: 0.08, transmission: 0.7, transparent: true, opacity: 0.5, metalness: 0 }), []);
+
+  const single = style === "cardholder" || style === "money-clip";
+  const pw = single ? 1.5 : 1.7;
+  const ph = style === "long" ? 2.5 : 1.95;
+  const th = 0.12;
+  const slots = style === "cardholder" ? 4 : style === "long" ? 5 : style === "money-clip" ? 2 : 3;
+  const panels = style === "trifold" ? 3 : single ? 1 : 2;
+  const half = (panels - 1) / 2;
+
+  const renderPanel = (i: number, x: number, cards: boolean) => (
+    <group key={i} position={[x, 0, 0]}>
+      {/* painted edge rim + body panel + interior lining */}
+      <RoundedBox args={[pw + 0.06, ph + 0.06, th * 0.7]} radius={0.06} position={[0, 0, -0.02]} material={edge}/>
+      <RoundedBox args={[pw, ph, th]} radius={0.08} position={[0, 0, 0]} material={bodyMat}/>
+      <RoundedBox args={[pw - 0.12, ph - 0.12, 0.02]} radius={0.06} position={[0, 0, th / 2 + 0.011]} material={lining}/>
+      {/* stitch frame (top + bottom) */}
+      <RoundedBox args={[pw - 0.06, 0.03, th + 0.02]} radius={0.01} position={[0, ph / 2 - 0.08, 0.01]} material={stitch}/>
+      <RoundedBox args={[pw - 0.06, 0.03, th + 0.02]} radius={0.01} position={[0, -ph / 2 + 0.08, 0.01]} material={stitch}/>
+      {cards
+        ? Array.from({ length: slots }, (_, k) => {
+            const sy = ph / 2 - 0.5 - k * ((ph - 0.7) / slots);
+            return (
+              <group key={k} position={[0, sy, th / 2 + 0.02 + k * 0.012]}>
+                <RoundedBox args={[pw - 0.18, 0.5, 0.03]} radius={0.03} material={slotMat}/>
+                <RoundedBox args={[pw - 0.18, 0.03, 0.035]} radius={0.01} position={[0, 0.25, 0.006]} material={stitch}/>
+              </group>
+            );
+          })
+        : (<group>
+            <RoundedBox args={[pw - 0.16, ph * 0.62, 0.03]} radius={0.04} position={[0, -0.12, th / 2 + 0.03]} material={lining}/>
+            <RoundedBox args={[pw - 0.4, 0.62, 0.03]} radius={0.03} position={[0, ph / 2 - 0.5, th / 2 + 0.05]} material={slotMat}/>
+            <mesh position={[0, ph / 2 - 0.5, th / 2 + 0.066]} material={idWin}><planeGeometry args={[pw - 0.52, 0.48]}/></mesh>
+          </group>)}
+    </group>
+  );
+
   return (
-    <group rotation={[0.22, 0.32, 0]}>
-      {/* Wallet body */}
-      <RoundedBox args={[3.2, 1.92, 0.24]} radius={0.12} position={[0,0,0]} material={mat}/>
-      {/* Inner card slot visible */}
-      <RoundedBox args={[3.0, 1.72, 0.08]} radius={0.1} position={[0,0,0.14]} material={inner}/>
-      {/* Card slots */}
-      <RoundedBox args={[1.18, 1.0, 0.1]} radius={0.08} position={[0.88,0.28,0.2]} material={inner}/>
-      <RoundedBox args={[1.18, 0.85, 0.1]} radius={0.08} position={[-0.88,0.22,0.2]} material={inner}/>
-      {/* Center divider */}
-      <RoundedBox args={[0.06, 1.72, 0.22]} radius={0.03} position={[0,0,0.06]} material={stitchMat}/>
-      {/* Stitching edge */}
-      {[-1.52,1.52].map((x,i) => <RoundedBox key={i} args={[0.04,1.72,0.26]} radius={0.02} position={[x,0,0]} material={stitchMat}/>)}
+    <group rotation={[0.5, -0.12, 0]} scale={1.05}>
+      {Array.from({ length: panels }, (_, i) => renderPanel(i, (i - half) * (pw + 0.04), single ? true : i % 2 === 0))}
+      {/* fold crease(s) */}
+      {panels > 1 && Array.from({ length: panels - 1 }, (_, i) => (
+        <RoundedBox key={`h${i}`} args={[0.04, ph, th + 0.02]} radius={0.02} position={[(i - half + 0.5) * (pw + 0.04), 0, 0.01]} material={edge}/>
+      ))}
+      {/* zip-around track + pull */}
+      {style === "zip" && <>
+        {[ph / 2 + 0.03, -ph / 2 - 0.03].map((y, i) => (
+          <RoundedBox key={i} args={[panels * (pw + 0.04) + 0.08, 0.09, th + 0.05]} radius={0.03} position={[0, y, 0]} material={hardware}/>
+        ))}
+        <mesh position={[panels * (pw + 0.04) / 2, ph / 2 + 0.03, 0.09]} material={hardware}><boxGeometry args={[0.1, 0.2, 0.06]}/></mesh>
+      </>}
+      {/* money clip on the back */}
+      {style === "money-clip" && <RoundedBox args={[pw * 0.72, 0.18, 0.05]} radius={0.03} position={[0, 0.1, -th / 2 - 0.05]} material={hardware}/>}
+      {/* corner hardware plate (not for money-clip) */}
+      {style !== "money-clip" && <RoundedBox args={[0.36, 0.14, 0.04]} radius={0.03} position={[half * (pw + 0.04) - 0.34, -ph / 2 + 0.3, th / 2 + 0.03]} material={hardware}/>}
+      {/* monogram */}
+      {o.monogram === "corner" && <RoundedBox args={[0.22, 0.22, 0.03]} radius={0.02} position={[-half * (pw + 0.04) + 0.3, ph / 2 - 0.32, th / 2 + 0.03]} material={hardware}/>}
+      {o.monogram === "center" && <RoundedBox args={[0.5, 0.16, 0.03]} radius={0.03} position={[-half * (pw + 0.04), 0, th / 2 + 0.03]} material={hardware}/>}
     </group>
   );
 }
