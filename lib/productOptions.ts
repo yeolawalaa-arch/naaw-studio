@@ -414,16 +414,22 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
   // ── HATS ──
   cap: [
     FABRIC_OPT("cotton", [["cotton","Cotton"],["denim","Denim"],["wool","Wool"],["mesh","Trucker Mesh"],["canvas","Canvas"],["corduroy","Corduroy"],["nylon","Nylon"],["twill","Twill"],["suede","Suede"]]),
+    COLOR_OPT("bodyColor","Crown Colour","navy"),
+    COLOR_OPT("brimColor","Brim Colour","navy"),
     { id: "brim", label: "Brim", default: "curved", choices: [F("curved","Curved"),F("flat","Flat")] },
     { id: "button", label: "Top Button", default: "accent", choices: [M("gold","Gold"),M("silver","Silver"),M("black","Black"),M("gunmetal","Gunmetal"),M("bronze","Bronze"),C("accent","Match Accent")] },
   ],
   beanie: [
     FABRIC_OPT("wool", [["wool","Wool Knit"],["fleece","Fleece"],["cotton","Cotton"],["knit","Ribbed Knit"],["cashmere","Cashmere"],["sherpa","Sherpa"],["terry","Terry"]]),
+    COLOR_OPT("bodyColor","Colour","charcoal"),
+    COLOR_OPT("cuffColor","Cuff Colour","charcoal"),
     { id: "cuff", label: "Cuff", default: "folded", choices: [F("folded","Folded"),F("slouch","Slouch"),F("tight","Tight")] },
     { id: "pom", label: "Pom-Pom", default: "yes", choices: [F("yes","With Pom"),F("no","No Pom")] },
   ],
   "bucket-hat": [
     FABRIC_OPT("cotton", [["cotton","Cotton"],["denim","Denim"],["nylon","Nylon"],["corduroy","Corduroy"],["canvas","Canvas"],["twill","Twill"],["terry","Terry"],["suede","Suede"]]),
+    COLOR_OPT("bodyColor","Colour","olive"),
+    COLOR_OPT("brimColor","Brim Colour","olive"),
     { id: "brim", label: "Brim", default: "medium", choices: [F("short","Short"),F("medium","Medium"),F("wide","Wide")] },
   ],
 
@@ -459,6 +465,8 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
     { id: "glass", label: "Crystal Tint", default: "clear", choices: [
       C("clear","Clear","#cfe8ff"),C("blue","Blue","#3a7bd5"),C("green","Green","#2E7D5B"),
       C("purple","Purple","#6A4AA0"),C("rose","Rose","#C98A9B"),C("smoke","Smoke","#555") ] },
+    COLOR_OPT("strapColor","Strap Colour","brown"),
+    COLOR_OPT("dialColor","Dial Colour","charcoal"),
   ],
   sunglasses: [
     { id: "frame", label: "Frame Material", default: "silver", choices: [
@@ -473,7 +481,8 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
       F("oversized","Oversized"),F("hexagon","Hexagon") ] },
   ],
   belt: [
-    FABRIC_OPT("leather", [["leather","Leather"],["suede","Suede"],["patent","Patent"],["canvas","Canvas"],["nylon","Woven"],["denim","Denim"]]),
+    FABRIC_OPT("leather", [["leather","Leather"],["suede","Suede"],["croc","Croc"],["patent","Patent"],["canvas","Canvas"],["nylon","Woven"],["denim","Denim"]]),
+    COLOR_OPT("strapColor","Strap Colour","brown"),
     { id: "buckle", label: "Buckle Metal", default: "gold", choices: METAL_CHOICES },
     { id: "buckleStyle", label: "Buckle Style", default: "frame", choices: [
       F("frame","Frame"),F("plate","Plate"),F("ring","Ring"),F("double-ring","Double Ring"),F("western","Western") ] },

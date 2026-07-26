@@ -1037,8 +1037,8 @@ function Jeans3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 // CAP
 // ─────────────────────────────────────────────
 function Cap3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.82, 0, 0.2, finishOf(options));
-  const brim = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.75, clearcoat: 0.4 }), [colors.secondary]);
+  const mat = useMat({ ...colors, main: partColor(options?.bodyColor, colors.main) }, pattern, 0.82, 0, 0.2, finishOf(options));
+  const brim = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(partColor(options?.brimColor, colors.secondary)), roughness: 0.75, clearcoat: 0.4 }), [options?.brimColor, colors.secondary]);
   const acc = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.accent), roughness: 0.3, clearcoat: 0.6 }), [colors.accent]);
   const btnMat = useMemo(() => (!options?.button || options.button === "accent") ? acc : metalMaterial(options.button, colors.accent), [options?.button, acc, colors.accent]);
   const flat = options?.brim === "flat";
@@ -1066,9 +1066,11 @@ function Cap3D({ colors, pattern, options }: { colors: ProductColors; pattern: s
 // BEANIE
 // ─────────────────────────────────────────────
 function Beanie3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.92, 0, 0, finishOf(options));
-  // Ribs are the SAME knit, just a touch darker — gives knit grooves without a metallic look.
-  const rib = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.main).multiplyScalar(0.8), roughness: 0.96 }), [colors.main]);
+  const mat = useMat({ ...colors, main: partColor(options?.bodyColor, colors.main) }, pattern, 0.92, 0, 0, finishOf(options));
+  const cuffCol = partColor(options?.cuffColor, colors.main);
+  const cuffMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(cuffCol), roughness: 0.92 }), [cuffCol]);
+  // Ribs are the SAME knit as the cuff, just a touch darker — knit grooves without a metallic look.
+  const rib = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(cuffCol).multiplyScalar(0.8), roughness: 0.96 }), [cuffCol]);
   const pomMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.accent), roughness: 0.68 }), [colors.accent]);
   const pom = options?.pom !== "no";
   const cuff = options?.cuff || "folded";
@@ -1084,7 +1086,7 @@ function Beanie3D({ colors, pattern, options }: { colors: ProductColors; pattern
         <sphereGeometry args={[1.02, 40, 32, 0, Math.PI * 2, 0, Math.PI * 0.6]} />
       </mesh>
       {/* Rolled cuff band around the forehead */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} material={mat}>
+      <mesh rotation={[Math.PI / 2, 0, 0]} material={cuffMat}>
         <torusGeometry args={[1.0, 0.17, 16, 48]} />
       </mesh>
       {/* Vertical knit ribs riding the cuff */}
@@ -1110,8 +1112,8 @@ function Beanie3D({ colors, pattern, options }: { colors: ProductColors; pattern
 // BUCKET HAT
 // ─────────────────────────────────────────────
 function BucketHat3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.82, 0, 0.2, finishOf(options));
-  const brim = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.82, clearcoat: 0.2 }), [colors.secondary]);
+  const mat = useMat({ ...colors, main: partColor(options?.bodyColor, colors.main) }, pattern, 0.82, 0, 0.2, finishOf(options));
+  const brim = useMemo(() => new THREE.MeshPhysicalMaterial({ color: new THREE.Color(partColor(options?.brimColor, colors.secondary)), roughness: 0.82, clearcoat: 0.2 }), [options?.brimColor, colors.secondary]);
   const brimSize = options?.brim || "medium";
   const brimR = brimSize === "short" ? 1.26 : brimSize === "wide" ? 1.66 : 1.44;
   return (
@@ -1371,16 +1373,17 @@ function Watch3D({ colors, pattern, options }: { colors: ProductColors; pattern:
     strapId === "suede"  ? FABRICS.suede :
     strapId === "canvas" ? FABRICS.canvas :
     FABRICS.leather;
-  const bandFabricMat = useMat(colors, pattern, 0.62, 0, 0.4, strapFab);
+  const bandFabricMat = useMat({ ...colors, main: partColor(o.strapColor, colors.main) }, pattern, 0.62, 0, 0.4, strapFab);
   const caseMat = useMemo(() => metalMaterial(o.caseMetal, colors.accent), [o.caseMetal, colors.accent]);
   const bandMat = strapId === "steel" ? caseMat : bandFabricMat;
+  const dialCol = partColor(o.dialColor, colors.secondary);
   const dialMat = useMemo(() => {
     const d = o.dial || "sunburst";
-    if (d === "matte") return new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.7, metalness: 0.1 });
+    if (d === "matte") return new THREE.MeshStandardMaterial({ color: new THREE.Color(dialCol), roughness: 0.7, metalness: 0.1 });
     if (d === "carbon") return new THREE.MeshStandardMaterial({ color: new THREE.Color("#191B1E"), roughness: 0.45, metalness: 0.55 });
-    if (d === "skeleton") return new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.1, metalness: 0.25, transmission: 0.5, thickness: 0.3 });
-    return new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colors.secondary), roughness: 0.08, metalness: 0.55, clearcoat: 0.9 });
-  }, [o.dial, colors.secondary]);
+    if (d === "skeleton") return new THREE.MeshPhysicalMaterial({ color: new THREE.Color(dialCol), roughness: 0.1, metalness: 0.25, transmission: 0.5, thickness: 0.3 });
+    return new THREE.MeshPhysicalMaterial({ color: new THREE.Color(dialCol), roughness: 0.08, metalness: 0.55, clearcoat: 0.9 });
+  }, [o.dial, dialCol]);
   const glassMat = useMemo(() => {
     const tint: Record<string, number> = { clear: 0xCFE8FF, blue: 0x3A7BD5, smoke: 0x555555, green: 0x2E7D5B, purple: 0x6A4AA0, rose: 0xC98A9B };
     return new THREE.MeshPhysicalMaterial({ color: new THREE.Color(tint[o.glass || "clear"] ?? 0xCFE8FF), roughness: 0, metalness: 0, transmission: 0.85, thickness: 0.2 });
@@ -1498,7 +1501,7 @@ function Sunglasses3D({ colors, pattern, options }: { colors: ProductColors; pat
 // BELT
 // ─────────────────────────────────────────────
 function Belt3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.62, 0, 0.45, finishOf(options));
+  const mat = useMat({ ...colors, main: partColor(options?.strapColor, colors.main) }, pattern, 0.62, 0, 0.45, finishOf(options));
   const buckle = useMemo(() => metalMaterial(options?.buckle, colors.accent), [options?.buckle, colors.accent]);
   const buckleStyle = options?.buckleStyle || "frame";
   return (
