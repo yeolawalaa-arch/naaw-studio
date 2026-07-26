@@ -476,6 +476,7 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
     { id: "lensType", label: "Lens Type", default: "tinted", choices: [
       F("tinted","Tinted"),F("gradient","Gradient"),F("mirror","Mirror"),F("polarized","Polarized"),F("clear","Clear") ] },
     { id: "lensColor", label: "Lens Color", default: "smoke", choices: LENS_COLOR_CHOICES },
+    COLOR_OPT("frameColor","Frame Colour (acetate)","black"),
     { id: "shape", label: "Shape", default: "round", choices: [
       F("round","Round"),F("square","Square"),F("aviator","Aviator"),F("cat-eye","Cat-Eye"),
       F("oversized","Oversized"),F("hexagon","Hexagon") ] },
@@ -511,10 +512,15 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
   ],
   scarf: [
     FABRIC_OPT("wool", [["wool","Wool"],["silk","Silk"],["cashmere","Cashmere"],["chiffon","Chiffon"],["modal","Modal"],["linen","Linen"],["velvet","Velvet"],["jacquard","Jacquard"],["khadi","Khadi"]]),
+    COLOR_OPT("bodyColor","Colour","burgundy"),
+    COLOR_OPT("borderColor","Border / Fringe","cream"),
     { id: "fringe", label: "Fringe", default: "yes", choices: [F("yes","Fringed"),F("no","Clean Edge")] },
   ],
   socks: [
     FABRIC_OPT("cotton", [["cotton","Cotton"],["wool","Wool"],["mesh","Athletic"],["terry","Terry"],["modal","Modal"],["jersey","Jersey"]]),
+    COLOR_OPT("bodyColor","Colour","white"),
+    COLOR_OPT("cuffColor","Cuff / Stripe","red"),
+    COLOR_OPT("heelColor","Heel & Toe","charcoal"),
     { id: "length", label: "Length", default: "crew", choices: [F("ankle","Ankle"),F("crew","Crew"),F("knee","Knee-High")] },
   ],
   "phone-case": [
@@ -528,6 +534,7 @@ export const PRODUCT_OPTIONS: Record<string, ProductOption[]> = {
       F("oneplus-13","OnePlus 13"),F("oneplus-12","OnePlus 12") ] },
     { id: "material", label: "Material", default: "patent", choices: [
       F("patent","Glossy"),F("matte","Matte"),F("leather","Leather"),F("silicone","Silicone") ] },
+    COLOR_OPT("caseColor","Case Colour","black"),
     { id: "lens", label: "Camera Ring", default: "silver", choices: [
       M("silver","Silver"),M("gold","Gold"),M("black","Black"),M("gunmetal","Gunmetal"),
       M("graphite","Graphite"),M("titanium","Titanium"),M("rose-gold","Rose Gold"),M("chrome","Chrome"),M("bronze","Bronze") ] },

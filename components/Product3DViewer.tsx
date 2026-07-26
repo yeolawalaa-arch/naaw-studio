@@ -556,7 +556,7 @@ function ChunkySole({ soleMat, outsoleMat, toe, toeMat, depth = 2.04 }: {
     return s;
   }, []);
   const midGeo = useMemo(() => new THREE.ExtrudeGeometry(midsoleShape, {
-    depth, bevelEnabled: true, bevelThickness: 0.26, bevelSize: 0.34, bevelSegments: 8,
+    depth, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.24, bevelSegments: 8,
   }), [midsoleShape, depth]);
   const outGeo = useMemo(() => new THREE.ExtrudeGeometry(outsoleShape, {
     depth: depth + 0.14, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.14, bevelSegments: 5,
@@ -1449,8 +1449,11 @@ function Watch3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 function Sunglasses3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
   const o = options || {};
   const lensMat = useMemo(() => lensMaterial(o.lensType, o.lensColor, colors.main), [o.lensType, o.lensColor, colors.main]);
-  const frame = useMemo(() => metalMaterial(o.frame, colors.accent), [o.frame, colors.accent]);
-  const temple = useMemo(() => metalMaterial(o.frame, colors.secondary), [o.frame, colors.secondary]);
+  // Acetate / plastic frames take the Frame Colour; metal frames keep their metal finish.
+  const isShell = ["acetate", "tortoise", "matte", "wood"].includes(o.frame || "");
+  const frameCol = partColor(o.frameColor, colors.accent);
+  const frame = useMemo(() => { const m = metalMaterial(o.frame, colors.accent); if (isShell) (m as THREE.MeshStandardMaterial).color = new THREE.Color(frameCol); return m; }, [o.frame, colors.accent, isShell, frameCol]);
+  const temple = useMemo(() => { const m = metalMaterial(o.frame, colors.secondary); if (isShell) (m as THREE.MeshStandardMaterial).color = new THREE.Color(frameCol); return m; }, [o.frame, colors.secondary, isShell, frameCol]);
   const shape = o.shape || "round";
   const renderLens = (x: number) => {
     if (shape === "square") {
@@ -1681,8 +1684,8 @@ function Wallet3D({ colors, pattern, options }: { colors: ProductColors; pattern
 // ─────────────────────────────────────────────
 function Scarf3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
   const fab = FABRICS[options?.fabric || ""] || { roughness: 0.88, clearcoat: 0.1, sheen: 0.15 };
-  const mat = useMat(colors, pattern, 0.88, 0, 0.1, fab);
-  const acc = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.accent), roughness: 0.85 }), [colors.accent]);
+  const mat = useMat({ ...colors, main: partColor(options?.bodyColor, colors.main) }, pattern, 0.88, 0, 0.1, fab);
+  const acc = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(options?.borderColor, colors.accent)), roughness: 0.85 }), [options?.borderColor, colors.accent]);
   const fringe = options?.fringe !== "no";
   return (
     <group>
@@ -1705,8 +1708,9 @@ function Scarf3D({ colors, pattern, options }: { colors: ProductColors; pattern:
 // SOCKS
 // ─────────────────────────────────────────────
 function Socks3D({ colors, pattern, options }: { colors: ProductColors; pattern: string; options?: Opts }) {
-  const mat = useMat(colors, pattern, 0.86, 0, 0.1, finishOf(options));
-  const cuff = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(colors.accent), roughness: 0.86 }), [colors.accent]);
+  const mat = useMat({ ...colors, main: partColor(options?.bodyColor, colors.main) }, pattern, 0.86, 0, 0.1, finishOf(options));
+  const cuffMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(options?.cuffColor, colors.accent)), roughness: 0.86 }), [options?.cuffColor, colors.accent]);
+  const heelMat = useMemo(() => new THREE.MeshStandardMaterial({ color: new THREE.Color(partColor(options?.heelColor, colors.secondary)), roughness: 0.86 }), [options?.heelColor, colors.secondary]);
   const len = options?.length || "crew";
   const legH = len === "ankle" ? 1.25 : len === "knee" ? 3.45 : 2.35;
   const legY = -0.6 + legH / 2;
@@ -1716,17 +1720,17 @@ function Socks3D({ colors, pattern, options }: { colors: ProductColors; pattern:
       {/* Leg tube */}
       <Cylinder args={[0.58, 0.52, legH, 26]} position={[0,legY,0]} material={mat}/>
       {/* Ribbed cuff */}
-      <Cylinder args={[0.6, 0.6, 0.48, 26]} position={[0,cuffY,0]} material={cuff}/>
+      <Cylinder args={[0.6, 0.6, 0.48, 26]} position={[0,cuffY,0]} material={cuffMat}/>
       {/* Rib lines on cuff */}
       {Array.from({length:10},(_,i) => (
-        <Torus key={i} args={[0.6, 0.018, 6, 26, Math.PI*2]} position={[0,cuffY-0.22+i*0.04,0]} rotation={[Math.PI/2,0,0]} material={cuff}/>
+        <Torus key={i} args={[0.6, 0.018, 6, 26, Math.PI*2]} position={[0,cuffY-0.22+i*0.04,0]} rotation={[Math.PI/2,0,0]} material={cuffMat}/>
       ))}
       {/* Heel */}
-      <Sphere args={[0.58, 16, 16, Math.PI, Math.PI, 0, Math.PI/2]} position={[0.35,-0.62,0.25]} rotation={[Math.PI/2,Math.PI/2,0]} material={cuff}/>
+      <Sphere args={[0.58, 16, 16, Math.PI, Math.PI, 0, Math.PI/2]} position={[0.35,-0.62,0.25]} rotation={[Math.PI/2,Math.PI/2,0]} material={heelMat}/>
       {/* Foot tube */}
       <Cylinder args={[0.52, 0.46, 1.4, 24]} position={[0.5,-0.62,0.1]} rotation={[0,0,Math.PI/2]} material={mat}/>
       {/* Toe */}
-      <Sphere args={[0.46, 16, 16]} position={[1.25,-0.62,0.1]} material={mat}/>
+      <Sphere args={[0.46, 16, 16]} position={[1.25,-0.62,0.1]} material={heelMat}/>
     </group>
   );
 }
@@ -1762,7 +1766,7 @@ function PhoneCase3D({ colors, pattern, options }: { colors: ProductColors; patt
     : o.material === "leather" ? FABRICS.leather
     : o.material === "silicone" ? { roughness: 0.6, clearcoat: 0.2, sheen: 0 }
     : FABRICS.patent;
-  const mat = useMat(colors, pattern, 0.55, 0, 0.6, caseFin);
+  const mat = useMat({ ...colors, main: partColor(o.caseColor, colors.main) }, pattern, 0.55, 0, 0.6, caseFin);
   const screen = useMemo(() => new THREE.MeshPhysicalMaterial({ color: 0x07070C, roughness: 0.04, metalness: 0.1, transmission: 0.18, clearcoat: 1.0, clearcoatRoughness: 0.02 }), []);
   const ring = useMemo(() => metalMaterial(o.lens, "#1a1a1a"), [o.lens]);
   const glass = useMemo(() => new THREE.MeshPhysicalMaterial({ color: 0x0b0b16, roughness: 0, metalness: 0.15, transmission: 0.55, thickness: 0.4, clearcoat: 1.0, ior: 1.7, reflectivity: 0.6 }), []);
